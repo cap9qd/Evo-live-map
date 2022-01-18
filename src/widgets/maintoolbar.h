@@ -23,9 +23,12 @@ private:
 
     QAction *a_debug_action;
 
+    QAction *a_logview;
+
 signals:
     void s_connect();
     void s_ramReset();
+    void s_logview();
 
 };
 

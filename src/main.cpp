@@ -10,6 +10,7 @@
 #include "controller.h"
 #include "wblogger.h"
 #include "widgets/gauge_widget.h"
+#include "widgets/logViewer/logviewer.h"
 
 #include <QElapsedTimer>
 
@@ -27,7 +28,9 @@ int main(int argc, char *argv[])
     MainWindow mainWindow;
     controller controller;
     wbLogger wbLogger;
-gaugeWidget wbWgt("  = Wideband =  ", 4);
+    gaugeWidget wbWgt("  = Wideband =  ", 4);
+
+    LogViewer logView;
 
     QObject::connect(&devManager,   &deviceManager::tactrixArrived,          &wbManager, &wbManager::addTactrix);
 
@@ -61,7 +64,10 @@ gaugeWidget wbWgt("  = Wideband =  ", 4);
     //========================================================================================
     QObject::connect(&controller, &controller::Log, &mainWindow, &MainWindow::Log);
 
-
+    //LogViewer
+    QObject::connect(&controller, &controller::logReady,      &logView, &LogViewer::logReady);
+    QObject::connect(&controller, &controller::ecuRamMut,     &logView, &LogViewer::ecuRamMut);
+    QObject::connect(&mainWindow, &MainWindow::launchLogview, &logView, &LogViewer::showWin);
 
     mainWindow.setProtoManager(&protoManager);
 
@@ -79,5 +85,8 @@ gaugeWidget wbWgt("  = Wideband =  ", 4);
     app.installNativeEventFilter(&usbFilter);
     controller.start();
     mainWindow.show();
+
+    //logView.show();
+
     return app.exec();
 }

@@ -10,7 +10,7 @@ CONFIG += c++11
 #CONFIG   += rtti
 QT       += core gui xml serialport
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 DEFINES += QT_DEPRECATED_WARNINGS
 
 # Default rules for deployment.
@@ -60,6 +60,8 @@ SOURCES += src/main.cpp\
     src/map-decl/submap.cpp \
     src/widgets/commParamWidget.cpp \
     src/widgets/gauge_widget.cpp \
+    src/widgets/logViewer/logviewer.cpp \
+    src/widgets/logViewer/qcustomplot.cpp \
     src/widgets/maintoolbar.cpp \
     src/widgets/mapWidget/mapmodel.cpp \
     src/widgets/mapWidget/mapview.cpp \
@@ -107,6 +109,8 @@ HEADERS  += src/mainwindow.h \
     src/widgets/hexEditor/qhexedit/commands.h \
     src/widgets/hexEditor/qhexedit/qhexedit.h \
     src/widgets/hexEditor/hexeditor.h \
+    src/widgets/logViewer/logviewer.h \
+    src/widgets/logViewer/qcustomplot.h \
     src/widgets/maintoolbar.h \
     src/widgets/mapWidget/mapmodel.h \
     src/widgets/mapWidget/mapview.h \
@@ -115,7 +119,8 @@ HEADERS  += src/mainwindow.h \
     #libs/libusb/include/libusb.h \
     #graph_logger.h \
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    src/widgets/logViewer/logviewer.ui
 
 #DISTFILES +=
 

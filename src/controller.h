@@ -72,6 +72,8 @@ signals:
     void Log(QString);
     void logReady(QVector<float>);
 
+    void ecuRamMut(QVector<mutParam> ramMut);
+
 };
 
 #endif // CONTROLLER_H

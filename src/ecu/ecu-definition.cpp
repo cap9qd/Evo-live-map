@@ -79,6 +79,11 @@ void ecu_definition::getMUTparam(const QDomElement &element)
             _mut_param.scaling = scaling_qmap.value(el.attribute("scaling"));
 
             _mut_param.number = el.attribute("number").toInt(nullptr, 16);
+
+            _mut_param.name = el.attribute("name");
+
+            //_mut_param.unit = scaling_qmap.value(el.attribute("scaling")).units;
+
             ++RAM_MUT_count;
             RAM_MUT.insert(_mut_param.number, _mut_param );
         }
@@ -98,4 +103,5 @@ void ecu_definition::getScaling(const QDomElement &el)
 {
     Scaling sc(el);
     scaling_qmap.insert(sc.name, sc);
+
 }

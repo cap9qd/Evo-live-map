@@ -35,6 +35,8 @@
 #include "widgets/hexEditor/qhexedit/qhexedit.h"
 #include "widgets/hexEditor/hexeditor.h"
 
+#include "widgets/logViewer/logviewer.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -88,6 +90,7 @@ private:
     //======================== widget's =================================
     hexEditor *hexEdit;
     gaugeWidget *tactrix_afr_lcd = nullptr;
+    LogViewer *logView = nullptr;
     //======================== widget lists =================================
     QSet<gaugeWidget*> gauge_widget_set;
 
@@ -100,6 +103,7 @@ signals:
 
     void updateRAM(abstractMemoryScaled);
     void resetRAM();
+    void launchLogview();
 
     void dataLog(QVector<float>);
 

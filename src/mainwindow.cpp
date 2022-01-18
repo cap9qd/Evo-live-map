@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     hexEdit = new hexEditor(this);
     ui->directHex->layout()->addWidget(hexEdit);
     //=============================================================================
+    connect(_mainToolBar, &mainToolBar::s_logview, this, &MainWindow::launchLogview);
 
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::itemChecks);
     //connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*, int)), this, SLOT(itemChecks(QTreeWidgetItem*, int)));
@@ -29,6 +30,7 @@ MainWindow::~MainWindow()
 
     gaugeDelete();
     delete ui;
+    logView->close();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

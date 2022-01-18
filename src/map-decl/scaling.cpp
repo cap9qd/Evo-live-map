@@ -40,6 +40,7 @@ void Scaling::fromXML(const QDomElement &el)
         frexpr = el.attribute("frexpr");
         if (el.attribute("endian") == "big")
             endian = true;
+        units = el.attribute("units");
     }
     setFastNotation();
 }

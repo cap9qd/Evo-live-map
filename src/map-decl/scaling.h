@@ -36,6 +36,7 @@ public:
     float increment = 0;
     QString Original;
     QString Patched;
+    QString units;
 
     void fromXML(const QDomElement &el);
 

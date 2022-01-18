@@ -10,7 +10,9 @@ mainToolBar::mainToolBar(QWidget *parent):QToolBar(parent)
     a_ramReset->setDisabled(true);
     //a_logger = addAction( "Start", this, &MainWindow::logger_slot);
     //a_logger->setDisabled(true);
-
+    addSeparator();
+    a_logview = addAction(QIcon(":ico/logview.png"), "Launch LogView", this, &mainToolBar::s_logview);
+    a_logview->setDisabled(false);
     addSeparator();
     //QWidget* empty = new QWidget(this);
     //empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);

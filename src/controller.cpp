@@ -6,6 +6,7 @@ controller::controller(QObject *parent) : QObject(parent)
     qRegisterMetaType<mapDefinition>("mapDefinition");
     qRegisterMetaType<abstractMemoryScaled>("abstractMemoryScaled");
     qRegisterMetaType<QVector<float>>("QVector<float>");
+    qRegisterMetaType<QVector<mutParam>>("QVector<mutParam>");
 
     this_thread = new QThread();
     QObject::connect(this_thread, &QThread::started, this, &controller::init//, Qt::QueuedConnection
@@ -100,6 +101,8 @@ void controller::getECUconnect()
     }
 
     emit ecu_connected();
+    emit ecuRamMut(_ecu_definition->RAM_MUT);
+
     // переберем все описания таблиц
     for ( Map *tab : qAsConst(_ecu_definition->RAMtables) )
     {
