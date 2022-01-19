@@ -13,13 +13,6 @@ QT       += core gui xml serialport
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 DEFINES += QT_DEPRECATED_WARNINGS
 
-GIT_VERSION = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
-DEFINES += GIT_VERSION=\\\"$$GIT_VERSION\\\"
-#VERSION = $$GIT_VERSION
-#win32 {
-#    VERSION ~= s/-\d+-g[a-f0-9]{6,}//
-#}
-
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
@@ -160,8 +153,14 @@ win32-msvc {
                 QMAKE_CFLAGS  += /Arch: SSE2
 
 #                LIBS += -L$$PWD/msvc-dll -lqwt
-            }
+}
 
+GIT_VERSION = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
+DEFINES += GIT_VERSION=\\\"$$GIT_VERSION\\\"
+VERSION = $$GIT_VERSION
+win32 {
+    VERSION ~= s/-\d+-g[a-f0-9]{6,}//
+}
 
 DEFINES += QHEXEDIT_EXPORTS
 #DEFINES += QHEXEDIT_IMPORTS
