@@ -69,7 +69,7 @@ void controller::setLogRate(uint logRate)
     _dataLogger->setLogRate(logRate);
 }
 
-void controller::getECUconnect()
+void controller::connectECU()
 {
     qDebug() << "=========== controller::getECUconnect ================" << devComm->getBaudRate();
     if (!ECUproto->connect())
@@ -114,7 +114,7 @@ void controller::getECUconnect()
     _dataLogger->start();
 }
 
-void controller::getECUdisconnect()
+void controller::disConnectECU()
 {
     _dataLogger->stop();
 
@@ -167,8 +167,10 @@ mapDefinition *controller::getMap(Map *declMap)
 
 void controller::updateRAM(abstractMemoryScaled memory)
 {
+    //_dataLogger->stop();
     ECUproto->directDMAwrite(memory.addr, memory.data(), memory.size());
-    QThread::msleep(50);
+    //_dataLogger->start();
+    //QThread::msleep(50);
 }
 
 QString controller::SearchFiles(QString path, QString CalID)       // Для поиска файлов в каталоге

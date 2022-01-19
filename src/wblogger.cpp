@@ -28,16 +28,13 @@ void wbLogger::setWB(commDeviceWB *cdWB)
         this->cdWB->closeWB();
     }
 
-
-
     this->cdWB = cdWB;
     if (cdWB != nullptr  )
     {
-        //cdWB->moveToThread(thread());
-        //qDebug() << "=========== wbLogger::cdWB->openWB ================" << cdWB;
-        //        cdWB->openWB(19600);
-        //cdWB->connectWB(19600);
-        //        start();
+        connect(cdWB, &commDeviceWB::readyRead, this, [this](QByteArray a){
+            logReady(_wbProto->handleWB(a));
+            qDebug() << "=========== wbLogger::readyRead ================";
+        });
     }
     else
     {
@@ -47,7 +44,7 @@ void wbLogger::setWB(commDeviceWB *cdWB)
     }
 }
 
-void wbLogger::setProto(int proto)
+void wbLogger::setProto(wbProto *proto)
 {
     qDebug() << "=========== wbLogger::setProto ================" << proto;
     this->_wbProto = proto;
@@ -56,12 +53,17 @@ void wbLogger::setProto(int proto)
 void wbLogger::start_stop(bool start)
 {
     qDebug() << "=========== wbLogger::start_stop ================" << cdWB;
-    if(cdWB->isClosed())
-        cdWB->openWB(19200);
     if(start)
-        pollTimer->start(50);
+    {
+        //pollTimer->start(50);
+//        if(cdWB->isClosed())
+//            cdWB->openWB(_wbProto->baudRate);
+    }
     else
-        pollTimer->stop();
+        //pollTimer->stop()
+//        if(!cdWB->isClosed())
+//            cdWB->closeWB()
+        ;
 }
 
 void wbLogger::start()
@@ -80,6 +82,8 @@ void wbLogger::poll()
     QByteArray a = cdWB->readWB();
     if(a.size() > 0)
     {
-        logReady(handleWB(_wbProto, a));
+        logReady(_wbProto->handleWB(a));
     }
+    else
+        logReady("ERR");
 }

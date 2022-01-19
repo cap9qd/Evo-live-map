@@ -24,11 +24,12 @@ bool j2534_interface::info()
         if (j2534->PassThruOpen(nullptr, &devID))         // Get devID
         {
             qDebug() << "==================== j2534_interface:info open ==================================" << j2534->lastErrorString();
-            emit Log("PassThruOpen error: " + reportJ2534Error());
+            //emit Log("PassThruOpen error: " + reportJ2534Error());
             return false;
         }
+    setUse();
     qDebug() << "==================== j2534_interface:info open2 ==================================" << j2534->lastErrorString();
-    emit Log("PassThruOpen deviceID: " + QString::number(devID) + " /opened");
+    //emit Log("PassThruOpen deviceID: " + QString::number(devID) + " /opened");
 
     //    //читаем версию и прочюю требуху
     //    char strApiVersion[256];
@@ -53,12 +54,11 @@ bool j2534_interface::info()
     if (j2534->PassThruClose(devID) != PassThru::Status::NoError)
     {
         qDebug()<<"PassThruClose error: ";
-        emit Log("PassThruClose error: " + reportJ2534Error() );
         return false;
     }
-    devID = 0;
+
+    resetUse();
     return true;
-    //emit readyInterface(true);
 }
 
 bool j2534_interface::open(Protocol protocol, enum ConnectFlag ConnectFlag, uint baudRate)
@@ -69,54 +69,53 @@ bool j2534_interface::open(Protocol protocol, enum ConnectFlag ConnectFlag, uint
     rx_msg.setProtocolId(protocol);
     tx_msg.setProtocolId(protocol);
 
-    if (j2534->PassThruOpen(nullptr, &devID))         // Get devID
+    if (isNotUse())
     {
-        qDebug() << "==================== j2534_interface:open ==================================" << j2534->lastErrorString();
-        emit Log("PassThruOpen error: " + reportJ2534Error());
-        return false;
+        if (j2534->PassThruOpen(nullptr, &devID))         // Get devID
+        {
+            qDebug() << "==================== j2534_interface::open::PassThruOpen ==================================" << j2534->lastErrorString();
+            return false;
+        }
+        setUse();;
     }
-    qDebug() << "==================== j2534_interface:open2 ==================================" << j2534->lastErrorString();
-    emit Log("PassThruOpen deviceID: " + QString::number(devID) + " /opened");
-
-    if (j2534->PassThruConnect(devID, protocol, ConnectFlag, baudRate, &chanID))
-    {
-        emit Log( "PassThruConnect: error" + reportJ2534Error() );
-        return false;
-    }
-    emit Log("PassThruConnect channel: " + QString::number(chanID) + " /connected");
-
+    if (chanID == 0)
+        if (j2534->PassThruConnect(devID, protocol, ConnectFlag, baudRate, &chanID))
+        {
+            qDebug() << "==================== j2534_interface::open::PassThruConnect ==================================" << j2534->lastErrorString() << "chanID" << chanID;
+            chanID = 0;
+            return false;
+        }
     return true;
 }
 
 bool j2534_interface::close()
 {
-    if (j2534->PassThruStopMsgFilter(chanID, msgId) != PassThru::Status::NoError )
-    {
-        emit Log("PassThruStopMsgFilter error: " + reportJ2534Error() );
-        reportJ2534Error();
-        return false;
-    }
-    emit Log("PassThruStopMsgFilter channel: " + QString::number(chanID) + " /stopped" );
+    //    if (j2534->PassThruStopMsgFilter(chanID, msgId) != PassThru::Status::NoError )
+    //    {
+    //        qDebug() << "==================== j2534_interface::close::PassThruStopMsgFilter ==================================" << j2534->lastErrorString();
+    //        //emit Log("PassThruStopMsgFilter error: " + reportJ2534Error() );
+    //        reportJ2534Error();
+    //        return false;
+    //    }
+    //emit Log("PassThruStopMsgFilter channel: " + QString::number(chanID) + " /stopped" );
 
     // shut down the channel
-    if (j2534->PassThruDisconnect(chanID) != PassThru::Status::NoError )
-    {
-        emit Log("PassThruDisconnect error: " + reportJ2534Error() );
-        reportJ2534Error();
-        return false;
-    }
-    emit Log("PassThruDisconnect channel: " + QString::number(chanID) + " /disconnected" );
+    if (chanID != 0)
+        if (j2534->PassThruDisconnect(chanID) != PassThru::Status::NoError )
+        {
+            qDebug() << "==================== j2534_interface::close::PassThruDisconnect ==================================" << j2534->lastErrorString();
+            chanID = 0;
+            return false;
+        }
+    chanID = 0;
 
-    if (j2534->PassThruClose(devID) != PassThru::Status::NoError)
-    {
-        qDebug()<<"PassThruClose error: ";
-        emit Log("PassThruClose error: " + reportJ2534Error() );
-        return false;
-    }
-    emit Log("PassThruClose deviceID: " + QString::number(devID) + " /closed" );
-
-    devID = 0;
-
+    if (resetUse())
+        if (j2534->PassThruClose(devID) != PassThru::Status::NoError)
+        {
+            qDebug() << "==================== j2534_interface::close::PassThruClose ==================================" << j2534->lastErrorString();
+            chanID = 0;
+            return false;
+        }
     return true;
 }
 
@@ -170,19 +169,12 @@ bool j2534_interface::five_baud_init()
     if (j2534->PassThruIoctl(chanID, PassThru::FIVE_BAUD_INIT, (void*)(&inputMsg), (void*)(&outputMsg)))
     {
         qDebug() << "jPassThruIoctl - FIVE_BAUD_INIT FAIL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-        emit Log( "PassThruIoctl - FIVE_BAUD_INIT : not ok  | " + reportJ2534Error()  + QByteArray((char*)KeyWord, 3).toHex(':'));
+        //emit Log( "PassThruIoctl - FIVE_BAUD_INIT : not ok  | " + reportJ2534Error()  + QByteArray((char*)KeyWord, 3).toHex(':'));
         return false;
     }
 
-    emit Log( "PassThruIoctl - FIVE_BAUD_INIT : OK  |  " + QByteArray((char*)KeyWord, 3).toHex(':'));
+    //emit Log( "PassThruIoctl - FIVE_BAUD_INIT : OK  |  " + QByteArray((char*)KeyWord, 3).toHex(':'));
     return true;
-}
-
-QString j2534_interface::reportJ2534Error()
-{
-    char err[512] = "\0";
-    //    int result = j2534->PassThruGetLastError(err);
-    return QString::fromLocal8Bit(err) + "\r\n";
 }
 
 bool j2534_interface::ISO9141()
@@ -207,7 +199,7 @@ bool j2534_interface::ISO9141()
     const SArray<const Config> configList{10, scp};
     if (j2534->PassThruIoctl(chanID, PassThru::SET_CONFIG, &configList, nullptr))
     {
-        emit Log( "PassThruIoctl - SET_CONFIG : fail  " + reportJ2534Error() );
+        //emit Log( "PassThruIoctl - SET_CONFIG : fail  " + reportJ2534Error() );
         return false;
     }
     // ============================ setup filter(s) =========================
@@ -225,11 +217,11 @@ bool j2534_interface::ISO9141()
 
     if ((msgId = j2534->PassThruStartMsgFilter(chanID, PassThru::PassFilter, &msgMask, &msgPattern, nullptr, &msgId)))
     {
-        emit Log( "PassThruIoctl - PassThruStartMsgFilter : not ok  " + reportJ2534Error() );
+        //emit Log( "PassThruIoctl - PassThruStartMsgFilter : not ok  " + reportJ2534Error() );
         return -1;
     }
 
-    emit Log( "PassThruIoctl - PassThruStartMsgFilter : OK" );
+    //emit Log( "PassThruIoctl - PassThruStartMsgFilter : OK" );
 
     j2534->PassThruIoctl(chanID, PassThru::IoctlID::CLEAR_RX_BUFFER, nullptr, nullptr);
     j2534->PassThruIoctl(chanID, PassThru::IoctlID::CLEAR_TX_BUFFER, nullptr, nullptr);
@@ -253,7 +245,7 @@ bool j2534_interface::ISO15765()
     const SArray<const Config> configList{4, scp};
     if (j2534->PassThruIoctl(chanID, PassThru::SET_CONFIG, &configList, nullptr))
     {
-        emit Log( "PassThruIoctl - SET_CONFIG : fail  " + reportJ2534Error() );
+        //emit Log( "PassThruIoctl - SET_CONFIG : fail  " + reportJ2534Error() );
         return false;
     }
     // ============================ setup the filter(s) =========================
@@ -296,10 +288,10 @@ bool j2534_interface::ISO15765()
 
     if ((msgId = j2534->PassThruStartMsgFilter(chanID, PassThru::FlowControlFilter, &msgMask, &msgPattern, &msgFlowControl, &msgId)))
     {
-        emit Log( "PassThruIoctl - PassThruStartMsgFilter : not ok  " + reportJ2534Error() );
+        //emit Log( "PassThruIoctl - PassThruStartMsgFilter : not ok  " + reportJ2534Error() );
         return -1;
     }
-    emit Log( "PassThruIoctl - PassThruStartMsgFilter : OK" );
+    //emit Log( "PassThruIoctl - PassThruStartMsgFilter : OK" );
     return msgId;
 
     QThread::msleep(100);

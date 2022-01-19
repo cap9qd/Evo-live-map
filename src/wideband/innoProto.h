@@ -1,8 +1,9 @@
 #ifndef INNOPROTO_H
 #define INNOPROTO_H
 
-
 #include <QDebug>
+
+#include "wb-proto.h"
 
 typedef struct
 {
@@ -78,16 +79,17 @@ typedef struct
     unsigned mark1		: 5;
 } inno_v1_aux_pkt;
 
-class innoProto
+class innoProto : public wbProto
 {
 public:
-    float handleWB(QByteArray a);
+    innoProto();
+    QString handleWB(QByteArray a);
 
 private:
     //uchar* data;
     //ulong *DataSize;
     float result;
-    float func_check(int func, uint _afr, uint _lambda);
+    QString func_check(int func, uint _afr, uint _lambda);
 
 };
 

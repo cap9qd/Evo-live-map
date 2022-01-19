@@ -3,6 +3,8 @@
 
 #include <QDebug>
 
+#include "wb-proto.h"
+
 enum ParserState {
     EXPECTING_START,
     EXPECTING_FIRST_HALF_OF_SENSOR_TYPE,
@@ -12,13 +14,14 @@ enum ParserState {
     EXPECTING_SECOND_HALF_OF_VALUE,
 };
 
-class plxProto
+class plxProto : public wbProto
 {
 public:
     uchar* data;
     ulong *DataSize;
 
-    float handleWB(QByteArray a);
+    plxProto();
+    QString handleWB(QByteArray a);
 
 private:
     float result;

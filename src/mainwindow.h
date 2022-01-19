@@ -98,8 +98,8 @@ private:
     void colorFromFile(QString filename);
 
 signals:
-    void getECUconnectMainWindow(int);
-    void getECUdisconnectMainWindow();
+    void connectECU(int);
+    void disConnectECU();
 
     void updateRAM(abstractMemoryScaled);
     void resetRAM();

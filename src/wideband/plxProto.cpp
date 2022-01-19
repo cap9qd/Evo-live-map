@@ -1,6 +1,11 @@
 #include "plxProto.h"
 
-float plxProto::handleWB(QByteArray a)
+plxProto::plxProto()
+{
+    baudRate = 0;
+}
+
+QString plxProto::handleWB(QByteArray a)
 {
     uchar b;
     if (b == (uchar) 0x80) {
@@ -52,5 +57,6 @@ float plxProto::handleWB(QByteArray a)
         //        );
         break;
     }
-    return 0;
+    emit logReady(QString::number(result));
+    return "PLX";
 }

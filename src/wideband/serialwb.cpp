@@ -1,24 +1,28 @@
 #include "serialwb.h"
 
-serialWB::serialWB(QSerialPortInfo portInfo, QObject *parent):QSerialPort(portInfo, parent)
+serialWB::serialWB(QSerialPortInfo portInfo, QObject *parent)//:QSerialPort(portInfo, parent)
 {
-
+    port.setPort(portInfo);
+    connect(&port, &QSerialPort::readyRead, this, [this](){
+        QByteArray a = readWB();
+        if (a.size() > 0)
+            emit readyRead(a);
+    });
+   // &commDeviceWB::readyRead);
 }
 
 bool serialWB::isClosed()
 {
-    qDebug() << "=========== serialWB::isClosed ================";
-    return !isOpen();
+    //qDebug() << "=========== serialWB::isClosed ================";
+    return !port.isOpen();
 }
 
 bool serialWB::openWB(uint baudRate)
 {
     qDebug() << "=========== serialWB::openWB ================";
-    setBaudRate(baudRate, QSerialPort::AllDirections);
-    qDebug() << "=========== serialWB::openWB2 ================";
-    open(QIODevice::ReadWrite);
-    qDebug() << "=========== serialWB::openWB3 ================";
-    return true;
+    port.setBaudRate(baudRate, QSerialPort::AllDirections);
+    //qDebug() << "=========== serialWB::openWB2 ================";
+    return port.open(QIODevice::ReadWrite);
 }
 
 bool serialWB::connectWB(unsigned int baudRate)
@@ -29,11 +33,12 @@ bool serialWB::connectWB(unsigned int baudRate)
 
 bool serialWB::closeWB()
 {
-
+    qDebug() << "=========== serialWB::closeWB ================";
+    port.close();
     return true;
 }
 
 QByteArray serialWB::readWB()
 {
-    return readAll();
+    return port.readAll();
 }
