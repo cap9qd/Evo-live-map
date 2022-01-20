@@ -32,12 +32,16 @@ private slots:
     void on_span_sb_editingFinished();
     void on_rate_sb_editingFinished();
 
+
+    void on_pb_frcEcuId_clicked();
+
 public slots:
     void logReady(QVector<float> scaledValues);
     void ecuRamMut(QVector<mutParam> ramMut);
     void showWin();
 
 private:
+    void forceTestRamMut();
     enum{maxPlots = 16};
     Ui::LogViewer *ui;
     QTimer dataTimer;
@@ -56,6 +60,7 @@ private:
     void configure();
     void configureMut();
     QElapsedTimer plotTimer;
+    QString LogViewer::SearchFiles(QString path, QString CalID);
 
 };
 #endif // LOGVIEWER_H

@@ -16,7 +16,7 @@ LogViewer::LogViewer(QWidget *parent)
         dataTimer.start(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
     } else {}
 }
-
+/*
 void LogViewer::realtimeDataSlot()
 {
     static QTime time(QTime::currentTime());
@@ -80,6 +80,37 @@ void LogViewer::realtimeDataSlot()
           frameCount = 0;
         }
     }
+}
+*/
+
+void LogViewer::realtimeDataSlot()
+{
+    QVector<float> scaledValues;
+    static double t = 0.0;
+    t += 1.0/refreshHz;
+
+    double oMax = 0.0;
+    double oMin = 0.0;
+    double iMax = 1.0;
+    double iMin = -1.0;
+    double m = 0;
+
+    std::uniform_real_distribution<double> dist(-1.0, 1.0);
+
+    double randAdd = dist(*QRandomGenerator::global());
+
+    for(int i = 0; i < RAM_MUT.size(); ++i)
+    {
+        oMax = RAM_MUT.at(i).scaling.max;
+        oMin = RAM_MUT.at(i).scaling.min;
+
+        m = (oMax-oMin)/(iMax-iMin);
+
+        randAdd = m*(dist(*QRandomGenerator::global())-iMin)+oMin;
+
+        scaledValues.insert(i, m*(qCos(t)-iMin)+oMin + randAdd*0.05);
+    }
+    logReady(scaledValues);
 }
 
 LogViewer::~LogViewer()
@@ -195,6 +226,37 @@ void LogViewer::ecuRamMut(QVector<mutParam> ramMut)
     configureMut();
 }
 
+QString LogViewer::SearchFiles(QString path, QString CalID)       // Для поиска файлов в каталоге
+{
+    // Пытаемся найти правильные файлы, в текущем каталоге
+    QStringList listFiles = QDir(path).entryList((CalID + "*.xml ").split(" "), QDir::Files);  //выборка файлов по маскам
+    if (listFiles.size()  == 0)            // если файл не найдем вернем егог
+        return "";
+    //return QFileDialog::getOpenFileName(nullptr,  tr("Open xml"), path, tr("xml files (*.xml)"));
+    else
+        return path + listFiles.at(0);
+}
+
+void LogViewer::forceTestRamMut()
+{
+    ecu_definition *_ecu_definition = new ecu_definition;
+    QString romID = ui->le_ecuid->text();
+
+    if (!_ecu_definition->fromFile(SearchFiles(QApplication::applicationDirPath() + "/xml/", romID)))
+    {
+        delete _ecu_definition;
+        qDebug() << "XML NOT FOUND!!!!!!!!!!!!!!!!!!!!!!!!!";
+        //emit Log("xml not found");
+        return;
+    }
+    //Send RAM_MUT to self
+    ecuRamMut(_ecu_definition->RAM_MUT);
+
+    //Start fake data based on RAM_MUT
+    connect(&dataTimer, SIGNAL(timeout()), this, SLOT(realtimeDataSlot()));
+    dataTimer.start(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
+
+}
 void LogViewer::showWin()
 {
     this->show();
@@ -206,15 +268,21 @@ void LogViewer::configureMut()
 
     for(int i = 0; i < RAM_MUT.size(); ++i)
     {
-        ui->plot->addGraph(); // blue line
-        //ui->plot->graph(i)->setPen(QPen(QColor(40, 110, 255)));
+        //Give each signal it's own y-axis for scaling
+        //QCPAxis *addAxis = ui->plot->axisRect()->addAxis(QCPAxis::AxisType::atLeft);
+        //Add graph with new axis
+        //ui->plot->addGraph(addAxis, ui->plot->yAxis);
+        ui->plot->addGraph();
+        //Set pen color to random...
         ui->plot->graph(i)->setPen(QPen( QColor( qrand() % 256, qrand() % 256, qrand() % 256 )));
-
+        //Make visible...
         ui->plot->graph(i)->setVisible(true);
 
+        //Setup hide plot checkboxes
         plotVisibleCB[i] = new QCheckBox(tr("%1 (%2)").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.units));
         plotVisibleCB[i]->setChecked(1);
         plotVisibleCB[i]->setCheckable(1);
+        //add to group box on left
         gbLayout->addWidget(plotVisibleCB[i],i);
     }
     ui->gb_params->setLayout(gbLayout);
@@ -304,3 +372,9 @@ void LogViewer::configure()
     pauseUpdate = false;
     updatePause();
 }
+
+void LogViewer::on_pb_frcEcuId_clicked()
+{
+    forceTestRamMut();
+}
+
