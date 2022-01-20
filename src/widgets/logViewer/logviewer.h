@@ -39,6 +39,7 @@ public slots:
     void logReady(QVector<float> scaledValues);
     void ecuRamMut(QVector<mutParam> ramMut);
     void showWin();
+    void horzScrollBarChanged(int value);
 
 private:
     void forceTestRamMut();
@@ -61,6 +62,7 @@ private:
     void configureMut();
     QElapsedTimer plotTimer;
     QString LogViewer::SearchFiles(QString path, QString CalID);
+    double scaleDouble(double in, double iMin, double iMax, double oMin, double oMax);
 
 };
 #endif // LOGVIEWER_H

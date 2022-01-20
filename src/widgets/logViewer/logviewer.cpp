@@ -9,12 +9,22 @@ LogViewer::LogViewer(QWidget *parent)
 
     ui->statusBar->setText("");
 
+    ui->span_sb->setValue(xSpan);
+    ui->span_sb->setMinimum(5.0);
+    ui->span_sb->setMaximum(90.0);
+
+    ui->rate_sb->setValue(refreshHz);
+    ui->rate_sb->setMinimum(1.0);
+    ui->rate_sb->setMaximum(30.0);
+
     // setup a timer that repeatedly calls MainWindow::realtimeDataSlot:
     if(widgetDebug) {
         configure();
         connect(&dataTimer, SIGNAL(timeout()), this, SLOT(realtimeDataSlot()));
         dataTimer.start(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
     } else {}
+    connect(ui->hsb_xRange, SIGNAL(valueChanged(int)), this, SLOT(horzScrollBarChanged(int)));
+    connect(ui->plot->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(xAxisChanged(QCPRange)));
 }
 /*
 void LogViewer::realtimeDataSlot()
@@ -83,6 +93,11 @@ void LogViewer::realtimeDataSlot()
 }
 */
 
+double LogViewer::scaleDouble(double in, double iMin, double iMax, double oMin, double oMax)
+{
+    return((oMax-oMin)/(iMax-iMin)*(in-iMin)+oMin);
+}
+
 void LogViewer::realtimeDataSlot()
 {
     QVector<float> scaledValues;
@@ -91,24 +106,19 @@ void LogViewer::realtimeDataSlot()
 
     double oMax = 0.0;
     double oMin = 0.0;
-    double iMax = 1.0;
-    double iMin = -1.0;
-    double m = 0;
 
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
 
-    double randAdd = dist(*QRandomGenerator::global());
+    double randAdd = 0.0;
 
     for(int i = 0; i < RAM_MUT.size(); ++i)
     {
         oMax = RAM_MUT.at(i).scaling.max;
         oMin = RAM_MUT.at(i).scaling.min;
 
-        m = (oMax-oMin)/(iMax-iMin);
+        randAdd = scaleDouble(dist(*QRandomGenerator::global()), -1.0, 1.0, oMin, oMax)*0.05;
 
-        randAdd = m*(dist(*QRandomGenerator::global())-iMin)+oMin;
-
-        scaledValues.insert(i, m*(qCos(t)-iMin)+oMin + randAdd*0.05);
+        scaledValues.insert(i, scaleDouble(qCos(t), -1.0, 1.0, oMin, oMax) + randAdd);
     }
     logReady(scaledValues);
 }
@@ -123,7 +133,22 @@ void LogViewer::on_btn_pause_clicked()
 {
     pauseUpdate = !pauseUpdate;
     updatePause();
+    //ui->plot->setInteraction(QCP::iRangeDrag, pauseUpdate);
+    QCPRange xRange = ui->plot->xAxis->range();
+    if(pauseUpdate)
+        ui->hsb_xRange->setRange((xRange.lower-(xRange.upper-xRange.lower))*100.0, (xRange.upper+(xRange.upper-xRange.lower))*100.0);
+    ui->hsb_xRange->setEnabled(pauseUpdate);
 }
+
+void LogViewer::horzScrollBarChanged(int value)
+{
+  if (qAbs(ui->plot->xAxis->range().center()-value/100.0) > 0.01) // if user is dragging plot, we don't want to replot twice
+  {
+    ui->plot->xAxis->setRange(value/100.0, ui->plot->xAxis->range().size(), Qt::AlignCenter);
+    ui->plot->replot();
+  }
+}
+
 
 void LogViewer::updatePause()
 {
@@ -182,15 +207,15 @@ void LogViewer::logReady(QVector<float> scaledValues)
         totalSize = 0;
         for(int i = 0; i < scaledValues.size(); ++i)
         {
-            ui->plot->graph(i)->addData(key, scaledValues.at(i));
+            ui->plot->graph(i)->addData(key, scaleDouble(scaledValues.at(i), RAM_MUT.at(i).scaling.min, RAM_MUT.at(i).scaling.max, 0.0, 100.0));
             if(!pauseUpdate)
             {
                 //Delete data out of view and rescale the axes
-                ui->plot->graph(i)->data()->removeBefore(key-(xRange.upper-xRange.lower)-(key-lastPointKey));
+                ui->plot->graph(i)->data()->removeBefore(key-(xRange.upper-xRange.lower)*10.0-(key-lastPointKey));
                 ui->plot->graph(i)->rescaleAxes(true);
             } else {
                 //Keep more data just in case we want to do statistics later on the visible data
-                ui->plot->graph(i)->data()->removeBefore(key-(xRange.upper-xRange.lower)*10.0);
+                ui->plot->graph(i)->data()->removeBefore(key-(xRange.upper-xRange.lower)*50.0);
             }
             totalSize += ui->plot->graph(i)->data()->size();
 
@@ -245,8 +270,7 @@ void LogViewer::forceTestRamMut()
     if (!_ecu_definition->fromFile(SearchFiles(QApplication::applicationDirPath() + "/xml/", romID)))
     {
         delete _ecu_definition;
-        qDebug() << "XML NOT FOUND!!!!!!!!!!!!!!!!!!!!!!!!!";
-        //emit Log("xml not found");
+        qDebug() << "XML NOT FOUND!";
         return;
     }
     //Send RAM_MUT to self
@@ -266,12 +290,27 @@ void LogViewer::configureMut()
 {
     QVBoxLayout *gbLayout = new QVBoxLayout();
 
+    // make left and bottom axes transfer their ranges to right and top axes:
+    connect(ui->plot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->plot->xAxis2, SLOT(setRange(QCPRange)));
+    connect(ui->plot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->plot->yAxis2, SLOT(setRange(QCPRange)));
+
+    ui->plot->xAxis->setRange(xSpan, xSpan, Qt::AlignRight);
+    ui->plot->replot();
+
+    QSharedPointer<QCPAxisTickerTime> timeTicker(new QCPAxisTickerTime);
+    timeTicker->setTimeFormat("%h:%m:%s");
+    ui->plot->xAxis->setTicker(timeTicker);
+    ui->plot->axisRect()->setupFullAxesBox();
+    ui->plot->yAxis->setRange(-1.2, 1.2);
+
     for(int i = 0; i < RAM_MUT.size(); ++i)
     {
         //Give each signal it's own y-axis for scaling
-        //QCPAxis *addAxis = ui->plot->axisRect()->addAxis(QCPAxis::AxisType::atLeft);
+        //QCPAxis *addAxis = ui->plot->axisRect()->addAxis(QCPAxis::AxisType::atBottom);//atLeft);
         //Add graph with new axis
-        //ui->plot->addGraph(addAxis, ui->plot->yAxis);
+        //addAxis->setVisible(false);
+        //connect(ui->plot->yAxis, SIGNAL(rangeChanged(QCPRange)), addAxis, SLOT(setRange(QCPRange)));
+        //ui->plot->addGraph(addAxis, ui->plot->xAxis);
         ui->plot->addGraph();
         //Set pen color to random...
         ui->plot->graph(i)->setPen(QPen( QColor( qrand() % 256, qrand() % 256, qrand() % 256 )));
@@ -285,32 +324,15 @@ void LogViewer::configureMut()
         //add to group box on left
         gbLayout->addWidget(plotVisibleCB[i],i);
     }
+    ui->plot->axisRect()->setRangeDragAxes(ui->plot->xAxis, nullptr);
     ui->gb_params->setLayout(gbLayout);
 
     qDebug() << "";
-
-    QSharedPointer<QCPAxisTickerTime> timeTicker(new QCPAxisTickerTime);
-    timeTicker->setTimeFormat("%h:%m:%s");
-    ui->plot->xAxis->setTicker(timeTicker);
-    ui->plot->axisRect()->setupFullAxesBox();
-    ui->plot->yAxis->setRange(-1.2, 1.2);
 
     updatePause();
 
     ui->gb_params->setMaximumWidth(200);
     ui->gb_params->setMinimumWidth(200);
-
-    ui->span_sb->setMinimum(5.0);
-    ui->span_sb->setMaximum(90.0);
-    ui->span_sb->setValue(xSpan);
-
-    ui->rate_sb->setMinimum(1.0);
-    ui->rate_sb->setMaximum(30.0);
-    ui->rate_sb->setValue(refreshHz);
-
-    // make left and bottom axes transfer their ranges to right and top axes:
-    connect(ui->plot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->plot->xAxis2, SLOT(setRange(QCPRange)));
-    connect(ui->plot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->plot->yAxis2, SLOT(setRange(QCPRange)));
 
     plotReady = true;
     pauseUpdate = false;

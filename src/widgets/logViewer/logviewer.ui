@@ -41,7 +41,18 @@
         </widget>
        </item>
        <item>
-        <widget class="QCustomPlot" name="plot" native="true"/>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <item>
+          <widget class="QCustomPlot" name="plot" native="true"/>
+         </item>
+         <item>
+          <widget class="QScrollBar" name="hsb_xRange">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </item>
