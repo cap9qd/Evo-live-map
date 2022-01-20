@@ -51,6 +51,8 @@ void mapView::keyPressEvent(QKeyEvent *event)
         actionCopy();
     else if( event->matches( QKeySequence::Paste ) )
         actionPaste();
+
+    qDebug() << tr("Key press: %1").arg(event->key());
 }
 
 void mapView::actionCopy(){
