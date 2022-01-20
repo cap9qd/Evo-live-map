@@ -324,6 +324,23 @@ void LogViewer::configureMut()
         lcdNumbers.insert(i, new QLCDNumber());
         lcdNumbers.at(i)->setMaximumWidth(50);
         lcdNumbers.at(i)->setDecMode();
+        lcdNumbers.at(i)->setSegmentStyle(QLCDNumber::Flat);
+
+        // get the palette
+        QPalette palette = lcdNumbers.at(i)->palette();
+
+        // foreground color
+        palette.setColor(palette.WindowText, QColor(85, 85, 255));
+        // background color
+        palette.setColor(palette.Background, QColor(0, 170, 255));
+        // "light" border
+        palette.setColor(palette.Light, QColor(255, 0, 0));
+        // "dark" border
+        palette.setColor(palette.Dark, QColor(0, 255, 0));
+
+        // set the palette
+        lcdNumbers.at(i)->setPalette(palette);
+
         hLayout->addWidget(lcdNumbers.at(i), 1);
         gbLayout->addLayout(hLayout);
     }
