@@ -79,6 +79,13 @@
          <item>
           <widget class="QDoubleSpinBox" name="span_sb"/>
          </item>
+         <item>
+          <widget class="QPushButton" name="pb_spanApply">
+           <property name="text">
+            <string>Apply</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -101,6 +108,13 @@
          </item>
          <item>
           <widget class="QDoubleSpinBox" name="rate_sb"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pb_rateApply">
+           <property name="text">
+            <string>Apply</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>

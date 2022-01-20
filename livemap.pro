@@ -15,10 +15,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 GIT_VERSION = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
 DEFINES += GIT_VERSION=\\\"$$GIT_VERSION\\\"
-#VERSION = $$GIT_VERSION
-#win32 {
-#    VERSION ~= s/-\d+-g[a-f0-9]{6,}//
-#}
+VERSION = $$GIT_VERSION
+win32 {
+    VERSION ~= s/-\d+-g[a-f0-9]{6,}//
+}
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

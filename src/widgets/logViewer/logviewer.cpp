@@ -172,11 +172,7 @@ void LogViewer::on_span_sb_editingFinished()
 
 void LogViewer::on_rate_sb_editingFinished()
 {
-    refreshHz = ui->rate_sb->value();
-    if(widgetDebug)
-    {
-        dataTimer.setInterval(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
-    }
+
 }
 
 void LogViewer::logReady(QVector<float> scaledValues)
@@ -207,6 +203,7 @@ void LogViewer::logReady(QVector<float> scaledValues)
         totalSize = 0;
         for(int i = 0; i < scaledValues.size(); ++i)
         {
+            lcdNumbers.at(i)->display(scaledValues.at(i));
             ui->plot->graph(i)->addData(key, scaleDouble(scaledValues.at(i), RAM_MUT.at(i).scaling.min, RAM_MUT.at(i).scaling.max, 0.0, 100.0));
             if(!pauseUpdate)
             {
@@ -220,7 +217,7 @@ void LogViewer::logReady(QVector<float> scaledValues)
             totalSize += ui->plot->graph(i)->data()->size();
 
             //enable/disable based on checkbox...
-            ui->plot->graph(i)->setVisible(plotVisibleCB[i]->isChecked());
+            ui->plot->graph(i)->setVisible(plotVisibleCB.at(i)->isChecked());
         }
 
         qDebug() << tr("PlotTime = %1 sec (%2 Hz)").arg(key-lastPointKey).arg(1.0/(key-lastPointKey));
@@ -317,12 +314,18 @@ void LogViewer::configureMut()
         //Make visible...
         ui->plot->graph(i)->setVisible(true);
 
+        QHBoxLayout *hLayout = new QHBoxLayout();
         //Setup hide plot checkboxes
-        plotVisibleCB[i] = new QCheckBox(tr("%1 (%2)").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.units));
-        plotVisibleCB[i]->setChecked(1);
-        plotVisibleCB[i]->setCheckable(1);
+        plotVisibleCB.insert(i, new QCheckBox(tr("%1 (%2)").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.units)));
+        plotVisibleCB.at(i)->setChecked(1);
+        plotVisibleCB.at(i)->setCheckable(1);
         //add to group box on left
-        gbLayout->addWidget(plotVisibleCB[i],i);
+        hLayout->addWidget(plotVisibleCB.at(i), 0);
+        lcdNumbers.insert(i, new QLCDNumber());
+        lcdNumbers.at(i)->setMaximumWidth(50);
+        lcdNumbers.at(i)->setDecMode();
+        hLayout->addWidget(lcdNumbers.at(i), 1);
+        gbLayout->addLayout(hLayout);
     }
     ui->plot->axisRect()->setRangeDragAxes(ui->plot->xAxis, nullptr);
     ui->gb_params->setLayout(gbLayout);
@@ -332,6 +335,7 @@ void LogViewer::configureMut()
     updatePause();
 
     ui->gb_params->setMaximumWidth(200);
+    ui->gb_params->setMinimumWidth(200);
     ui->gb_params->setMinimumWidth(200);
 
     plotReady = true;
@@ -349,19 +353,21 @@ void LogViewer::configure()
 
     for(int i = 0; i < maxPlots; ++i)
     {
+        /*
         randAmp[i]  = distAmp(*QRandomGenerator::global());
         randTime[i] = distTime(*QRandomGenerator::global());
 
         qDebug() << tr("randAmp[%1]  = ").arg(i) << tr("%1").arg(randAmp[i]);
         qDebug() << tr("randTime[%1] = ").arg(i) << tr("%1").arg(randTime[i]);
-
+        */
         ui->plot->addGraph(); // blue line
         //ui->plot->graph(i)->setPen(QPen(QColor(40, 110, 255)));
         ui->plot->graph(i)->setPen(QPen( QColor( qrand() % 256, qrand() % 256, qrand() % 256 )));
-        plotVisibleCB[i] = new QCheckBox(tr("PLOT %1").arg(i));
-        plotVisibleCB[i]->setChecked(1);
-        plotVisibleCB[i]->setCheckable(1);
-        gbLayout->addWidget(plotVisibleCB[i],i);
+        plotVisibleCB.insert(i, new QCheckBox(tr("PLOT %1").arg(i)));
+        plotVisibleCB.at(i)->setChecked(1);
+        plotVisibleCB.at(i)->setCheckable(1);
+
+        gbLayout->addWidget(plotVisibleCB.at(i), i);
     }
     ui->gb_params->setLayout(gbLayout);
 
@@ -398,5 +404,21 @@ void LogViewer::configure()
 void LogViewer::on_pb_frcEcuId_clicked()
 {
     forceTestRamMut();
+}
+
+
+void LogViewer::on_pb_spanApply_clicked()
+{
+        xSpan = ui->span_sb->value();
+}
+
+
+void LogViewer::on_pb_rateApply_clicked()
+{
+    refreshHz = ui->rate_sb->value();
+    if(widgetDebug)
+    {
+        dataTimer.setInterval(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
+    }
 }
 

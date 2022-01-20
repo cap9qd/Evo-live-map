@@ -35,6 +35,10 @@ private slots:
 
     void on_pb_frcEcuId_clicked();
 
+    void on_pb_spanApply_clicked();
+
+    void on_pb_rateApply_clicked();
+
 public slots:
     void logReady(QVector<float> scaledValues);
     void ecuRamMut(QVector<mutParam> ramMut);
@@ -46,9 +50,10 @@ private:
     enum{maxPlots = 16};
     Ui::LogViewer *ui;
     QTimer dataTimer;
-    double randAmp[maxPlots];
-    double randTime[maxPlots];
-    QCheckBox *plotVisibleCB[maxPlots];
+    //double randAmp[maxPlots];
+    //double randTime[maxPlots];
+    QVector<QCheckBox*> plotVisibleCB;
+    QVector<QLCDNumber*> lcdNumbers;
     double refreshHz = 10.0;
     bool pauseUpdate = true;
     void updatePause();
