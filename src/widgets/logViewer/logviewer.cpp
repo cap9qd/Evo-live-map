@@ -115,7 +115,6 @@ void LogViewer::realtimeDataSlot()
     {
         oMax = RAM_MUT.at(i).scaling.max;
         oMin = RAM_MUT.at(i).scaling.min;
-
         randAdd = scaleDouble(dist(*QRandomGenerator::global()), -1.0, 1.0, oMin, oMax)*0.05;
 
         scaledValues.insert(i, scaleDouble(qCos(t), -1.0, 1.0, oMin, oMax) + randAdd);
@@ -302,6 +301,7 @@ void LogViewer::configureMut()
 
     for(int i = 0; i < RAM_MUT.size(); ++i)
     {
+        qDebug() << tr("%1: [%2:%3]").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.min).arg(RAM_MUT.at(i).scaling.max);
         //Give each signal it's own y-axis for scaling
         //QCPAxis *addAxis = ui->plot->axisRect()->addAxis(QCPAxis::AxisType::atBottom);//atLeft);
         //Add graph with new axis
