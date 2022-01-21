@@ -25,6 +25,9 @@ LogViewer::LogViewer(QWidget *parent)
     } else {}
     connect(ui->hsb_xRange, SIGNAL(valueChanged(int)), this, SLOT(horzScrollBarChanged(int)));
     connect(ui->plot->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(xAxisChanged(QCPRange)));
+
+    updatePause();
+    ui->hsb_xRange->setEnabled(pauseUpdate);
 }
 /*
 void LogViewer::realtimeDataSlot()
@@ -133,19 +136,20 @@ void LogViewer::on_btn_pause_clicked()
     pauseUpdate = !pauseUpdate;
     updatePause();
     //ui->plot->setInteraction(QCP::iRangeDrag, pauseUpdate);
-    QCPRange xRange = ui->plot->xAxis->range();
     if(pauseUpdate)
-        ui->hsb_xRange->setRange((xRange.lower-(xRange.upper-xRange.lower))*100.0, (xRange.upper+(xRange.upper-xRange.lower))*100.0);
+        ui->hsb_xRange->setRange(-100, 100);
     ui->hsb_xRange->setEnabled(pauseUpdate);
 }
 
 void LogViewer::horzScrollBarChanged(int value)
 {
-  if (qAbs(ui->plot->xAxis->range().center()-value/100.0) > 0.01) // if user is dragging plot, we don't want to replot twice
-  {
-    ui->plot->xAxis->setRange(value/100.0, ui->plot->xAxis->range().size(), Qt::AlignCenter);
-    ui->plot->replot();
-  }
+    if (qAbs(ui->plot->xAxis->range().center()-value/100.0) > 0.01) // if user is dragging plot, we don't want to replot twice
+    {
+        QCPRange xRange = ui->plot->xAxis->range();
+        ui->plot->xAxis->setRange(scaleDouble(value*1.0, -100.0, 100.0, xRange.lower, xRange.upper), ui->plot->xAxis->range().size(), Qt::AlignCenter);
+        //ui->plot->xAxis->setRange(value/100.0, ui->plot->xAxis->range().size(), Qt::AlignCenter);
+        ui->plot->replot();
+    }
 }
 
 
@@ -223,9 +227,11 @@ void LogViewer::logReady(QVector<float> scaledValues)
         lastPointKey = key;
         ++frameCount;
 
-        // make key axis range scroll with the data:
-        ui->plot->xAxis->setRange(key, xSpan, Qt::AlignRight);
-
+        if(!pauseUpdate)
+        {
+            // make key axis range scroll with the data:
+            ui->plot->xAxis->setRange(key, xSpan, Qt::AlignRight);
+        }
         if(!pauseUpdate)
             ui->plot->replot();
 
@@ -277,6 +283,7 @@ void LogViewer::forceTestRamMut()
     dataTimer.start(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
 
 }
+
 void LogViewer::showWin()
 {
     this->show();
