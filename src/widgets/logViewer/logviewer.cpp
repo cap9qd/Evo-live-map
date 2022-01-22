@@ -20,11 +20,11 @@ LogViewer::LogViewer(QWidget *parent)
     // setup a timer that repeatedly calls MainWindow::realtimeDataSlot:
     if(widgetDebug) {
         configure();
-        connect(&dataTimer, SIGNAL(timeout()), this, SLOT(realtimeDataSlot()));
+        connect(&dataTimer, &QTimer::timeout, this, &LogViewer::realtimeDataSlot);
         dataTimer.start(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
     } else {}
-    connect(ui->hsb_xRange, SIGNAL(valueChanged(int)), this, SLOT(horzScrollBarChanged(int)));
-    connect(ui->plot->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(xAxisChanged(QCPRange)));
+    connect(ui->hsb_xRange, &QScrollBar::valueChanged, this, &LogViewer::horzScrollBarChanged);
+    //connect(ui->plot->xAxis, &QCPAxis::rangeChanged, this, &LogViewer::xAxisChanged);
 
     updatePause();
     ui->hsb_xRange->setEnabled(pauseUpdate);
@@ -282,7 +282,7 @@ void LogViewer::forceTestRamMut()
     ecuRamMut(_ecu_definition->RAM_MUT);
 
     //Start fake data based on RAM_MUT
-    connect(&dataTimer, SIGNAL(timeout()), this, SLOT(realtimeDataSlot()));
+    connect(&dataTimer, &QTimer::timeout, this, &LogViewer::realtimeDataSlot);
     dataTimer.start(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
 
 }
@@ -297,8 +297,12 @@ void LogViewer::configureMut()
     QVBoxLayout *gbLayout = new QVBoxLayout();
 
     // make left and bottom axes transfer their ranges to right and top axes:
-    connect(ui->plot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->plot->xAxis2, SLOT(setRange(QCPRange)));
-    connect(ui->plot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->plot->yAxis2, SLOT(setRange(QCPRange)));
+
+    connect(ui->plot->xAxis, static_cast<void (QCPAxis::*)(const QCPRange &)>(&QCPAxis::rangeChanged), ui->plot->xAxis2, static_cast<void (QCPAxis::*)(const QCPRange &)>(&QCPAxis::setRange));
+    //connect(ui->plot->xAxis, &QCPAxis::rangeChanged, ui->plot->xAxis2, &QCPAxis::setRange);
+
+    //connect(ui->plot->yAxis, &QCPAxis::rangeChanged, ui->plot->yAxis2, &QCPAxis::setRange);
+    connect(ui->plot->yAxis, static_cast<void (QCPAxis::*)(const QCPRange &)>(&QCPAxis::rangeChanged), ui->plot->yAxis2, static_cast<void (QCPAxis::*)(const QCPRange &)>(&QCPAxis::setRange));
 
     ui->plot->xAxis->setRange(xSpan, xSpan, Qt::AlignRight);
     ui->plot->replot();
@@ -448,8 +452,11 @@ void LogViewer::configure()
     ui->rate_sb->setValue(refreshHz);
 
     // make left and bottom axes transfer their ranges to right and top axes:
-    connect(ui->plot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->plot->xAxis2, SLOT(setRange(QCPRange)));
-    connect(ui->plot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->plot->yAxis2, SLOT(setRange(QCPRange)));
+    connect(ui->plot->xAxis, static_cast<void (QCPAxis::*)(const QCPRange &)>(&QCPAxis::rangeChanged), ui->plot->xAxis2, static_cast<void (QCPAxis::*)(const QCPRange &)>(&QCPAxis::setRange));
+    //connect(ui->plot->xAxis, &QCPAxis::rangeChanged, ui->plot->xAxis2, &QCPAxis::setRange);
+
+    //connect(ui->plot->yAxis, &QCPAxis::rangeChanged, ui->plot->yAxis2, &QCPAxis::setRange);
+    connect(ui->plot->yAxis, static_cast<void (QCPAxis::*)(const QCPRange &)>(&QCPAxis::rangeChanged), ui->plot->yAxis2, static_cast<void (QCPAxis::*)(const QCPRange &)>(&QCPAxis::setRange));
 
     plotReady = true;
     pauseUpdate = false;
