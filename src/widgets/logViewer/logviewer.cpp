@@ -339,7 +339,7 @@ void LogViewer::configureMut()
         plotVisibleCB.at(i)->setChecked(1);
         plotVisibleCB.at(i)->setCheckable(1);
 
-        connect(plotVisibleCB.at(i), SIGNAL(stateChanged(int)), this, SLOT(showPlot(int)));
+        connect(plotVisibleCB.at(i), &QCheckBox::stateChanged, this, &LogViewer::showPlot);
 
         //add to group box on left
         hLayout->addWidget(plotVisibleCB.at(i), 0);
