@@ -28,6 +28,8 @@ LogViewer::LogViewer(QWidget *parent)
 
     updatePause();
     ui->hsb_xRange->setEnabled(pauseUpdate);
+
+    ui->hsb_xRange->setRange(0, xSpan*10.0);
 }
 /*
 void LogViewer::realtimeDataSlot()
@@ -135,23 +137,16 @@ void LogViewer::on_btn_pause_clicked()
 {
     pauseUpdate = !pauseUpdate;
     updatePause();
-    //ui->plot->setInteraction(QCP::iRangeDrag, pauseUpdate);
-    if(pauseUpdate)
-        ui->hsb_xRange->setRange(-100, 100);
     ui->hsb_xRange->setEnabled(pauseUpdate);
-}
-
-void LogViewer::horzScrollBarChanged(int value)
-{
-    if (qAbs(ui->plot->xAxis->range().center()-value/100.0) > 0.01) // if user is dragging plot, we don't want to replot twice
+    if(pauseUpdate)
     {
-        QCPRange xRange = ui->plot->xAxis->range();
-        ui->plot->xAxis->setRange(scaleDouble(value*1.0, -100.0, 100.0, xRange.lower, xRange.upper), ui->plot->xAxis->range().size(), Qt::AlignCenter);
-        //ui->plot->xAxis->setRange(value/100.0, ui->plot->xAxis->range().size(), Qt::AlignCenter);
-        ui->plot->replot();
+        if ((lastKey-firstKey) < xSpan)
+            ui->hsb_xRange->setRange(ui->plot->xAxis->range().lower*10.0, ui->plot->xAxis->range().upper*10.0);
+        else
+            ui->hsb_xRange->setRange(firstKey*10.0, lastKey*10.0);
+        ui->hsb_xRange->setValue(ui->plot->xAxis->range().center()*10.0);
     }
 }
-
 
 void LogViewer::updatePause()
 {
@@ -176,6 +171,15 @@ void LogViewer::on_span_sb_editingFinished()
 void LogViewer::on_rate_sb_editingFinished()
 {
 
+}
+
+void LogViewer::showPlot(int state)
+{
+    for(int i = 0; i<plotVisibleCB.size(); ++i)
+    {
+        //enable/disable based on checkbox...
+        ui->plot->graph(i)->setVisible(plotVisibleCB.at(i)->isChecked());
+    }
 }
 
 void LogViewer::logReady(QVector<float> scaledValues)
@@ -210,6 +214,9 @@ void LogViewer::logReady(QVector<float> scaledValues)
             ui->plot->graph(i)->addData(key, scaleDouble(scaledValues.at(i), RAM_MUT.at(i).scaling.min, RAM_MUT.at(i).scaling.max, 0.0, 100.0));
             if(!pauseUpdate)
             {
+                lastKey = key;
+                firstKey = qMax(0.0, key-(xRange.upper-xRange.lower)*10.0-(key-lastPointKey));
+
                 //Delete data out of view and rescale the axes
                 ui->plot->graph(i)->data()->removeBefore(key-(xRange.upper-xRange.lower)*10.0-(key-lastPointKey));
                 ui->plot->graph(i)->rescaleAxes(true);
@@ -218,12 +225,9 @@ void LogViewer::logReady(QVector<float> scaledValues)
                 ui->plot->graph(i)->data()->removeBefore(key-(xRange.upper-xRange.lower)*50.0);
             }
             totalSize += ui->plot->graph(i)->data()->size();
-
-            //enable/disable based on checkbox...
-            ui->plot->graph(i)->setVisible(plotVisibleCB.at(i)->isChecked());
         }
 
-        qDebug() << tr("PlotTime = %1 sec (%2 Hz)").arg(key-lastPointKey).arg(1.0/(key-lastPointKey));
+        //qDebug() << tr("PlotTime = %1 sec (%2 Hz)").arg(key-lastPointKey).arg(1.0/(key-lastPointKey));
         lastPointKey = key;
         ++frameCount;
 
@@ -231,9 +235,8 @@ void LogViewer::logReady(QVector<float> scaledValues)
         {
             // make key axis range scroll with the data:
             ui->plot->xAxis->setRange(key, xSpan, Qt::AlignRight);
-        }
-        if(!pauseUpdate)
             ui->plot->replot();
+        }
 
         if (key-lastFpsKey > 2) // average fps over 2 seconds
         {
@@ -306,6 +309,7 @@ void LogViewer::configureMut()
     ui->plot->axisRect()->setupFullAxesBox();
     ui->plot->yAxis->setRange(-1.2, 1.2);
 
+    int gBoxSize = 200;
     for(int i = 0; i < RAM_MUT.size(); ++i)
     {
         qDebug() << tr("%1: [%2:%3]").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.min).arg(RAM_MUT.at(i).scaling.max);
@@ -317,7 +321,8 @@ void LogViewer::configureMut()
         //ui->plot->addGraph(addAxis, ui->plot->xAxis);
         ui->plot->addGraph();
         //Set pen color to random...
-        ui->plot->graph(i)->setPen(QPen( QColor( qrand() % 256, qrand() % 256, qrand() % 256 )));
+        QColor lineColor = QColor( qrand() % 256, qrand() % 256, qrand() % 256 );
+        ui->plot->graph(i)->setPen(QPen(lineColor));
         //Make visible...
         ui->plot->graph(i)->setVisible(true);
 
@@ -326,6 +331,9 @@ void LogViewer::configureMut()
         plotVisibleCB.insert(i, new QCheckBox(tr("%1 (%2)").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.units)));
         plotVisibleCB.at(i)->setChecked(1);
         plotVisibleCB.at(i)->setCheckable(1);
+
+        connect(plotVisibleCB.at(i), SIGNAL(stateChanged(int)), this, SLOT(showPlot(int)));
+
         //add to group box on left
         hLayout->addWidget(plotVisibleCB.at(i), 0);
         lcdNumbers.insert(i, new QLCDNumber());
@@ -333,8 +341,19 @@ void LogViewer::configureMut()
         lcdNumbers.at(i)->setDecMode();
         lcdNumbers.at(i)->setSegmentStyle(QLCDNumber::Flat);
 
+        QFrame* line = new QFrame;
+        line->setFrameShape(QFrame::HLine);
+
+        line->setMaximumWidth(25);
+        line->setMinimumWidth(25);
+
+        QPalette palette = line->palette();
+        palette.setColor(QPalette::WindowText, lineColor);
+        line->setPalette(palette);
+        hLayout->addWidget(line, 1);
+
         // get the palette
-        QPalette palette = lcdNumbers.at(i)->palette();
+        palette = lcdNumbers.at(i)->palette();
 
         // foreground color
         palette.setColor(palette.WindowText, QColor(85, 85, 255));
@@ -348,19 +367,22 @@ void LogViewer::configureMut()
         // set the palette
         lcdNumbers.at(i)->setPalette(palette);
 
-        hLayout->addWidget(lcdNumbers.at(i), 1);
+        hLayout->addWidget(lcdNumbers.at(i), 2);
         gbLayout->addLayout(hLayout);
+        gBoxSize = qMax(gBoxSize, plotVisibleCB.at(i)->sizeHint().width() + line->sizeHint().width() + lcdNumbers.at(i)->sizeHint().width() + 10);
     }
-    ui->plot->axisRect()->setRangeDragAxes(ui->plot->xAxis, nullptr);
+
     ui->gb_params->setLayout(gbLayout);
+
+    ui->gb_params->setMaximumWidth(gBoxSize);
+    ui->gb_params->setMinimumWidth(gBoxSize);
+
+    ui->plot->axisRect()->setRangeDragAxes(ui->plot->xAxis, nullptr);
 
     qDebug() << "";
 
     updatePause();
 
-    ui->gb_params->setMaximumWidth(200);
-    ui->gb_params->setMinimumWidth(200);
-    ui->gb_params->setMinimumWidth(200);
 
     plotReady = true;
     pauseUpdate = false;
@@ -444,5 +466,33 @@ void LogViewer::on_pb_rateApply_clicked()
     {
         dataTimer.setInterval(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
     }
+}
+
+
+void LogViewer::on_hsb_xRange_sliderReleased()
+{
+    ui->plot->replot();
+}
+
+void LogViewer::horzScrollBarChanged(int value)
+{
+    double dValue = value / 10.0;
+    double xMove = ui->plot->xAxis->range().center()-dValue;
+
+    qDebug() << tr("xMove = %1").arg(xMove);
+
+    if (qAbs(xMove) > 0.1) // if user is dragging plot, we don't want to replot twice
+    {
+        ui->plot->xAxis->setRange(dValue, ui->plot->xAxis->range().size(), Qt::AlignCenter);
+    }
+    if (qAbs(xMove) >= 1.0)
+    {
+        ui->plot->replot();
+    }
+}
+
+void LogViewer::on_hsb_xRange_sliderPressed()
+{
+
 }
 

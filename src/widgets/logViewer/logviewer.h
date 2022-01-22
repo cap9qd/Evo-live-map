@@ -39,6 +39,11 @@ private slots:
 
     void on_pb_rateApply_clicked();
 
+    void on_hsb_xRange_sliderReleased();
+
+    void on_hsb_xRange_sliderPressed();
+    void showPlot(int state);
+
 public slots:
     void logReady(QVector<float> scaledValues);
     void ecuRamMut(QVector<mutParam> ramMut);
@@ -68,6 +73,8 @@ private:
     QElapsedTimer plotTimer;
     QString LogViewer::SearchFiles(QString path, QString CalID);
     double scaleDouble(double in, double iMin, double iMax, double oMin, double oMax);
+    double lastKey;
+    double firstKey;
 
 };
 #endif // LOGVIEWER_H
