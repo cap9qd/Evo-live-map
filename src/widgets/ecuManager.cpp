@@ -13,8 +13,6 @@ ecuManager::ecuManager(QWidget *parent) : QToolBar(parent)
     connect(&ECUdef, &ecuDefinition::ecu_connected, this, &ecuManager::ecuConnected);
     connect(&ECUdef, &ecuDefinition::create_table, this, &ecuManager::create_table);
 
-    connect(&ECUdef, &ecuDefinition::logReady, this, &ecuManager::logReady);
-
     //setProto(0);
 
     //=============================================================================

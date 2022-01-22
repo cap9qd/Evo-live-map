@@ -7,7 +7,8 @@
 #include <QElapsedTimer>
 #include <QDialog>
 
-#include "../../controller.h"
+//#include "../../controller.h"
+#include "../ecuManager.h"
 #include "../../types.h"
 
 using namespace std;
@@ -21,8 +22,9 @@ class LogViewer : public QDialog
     Q_OBJECT
 
 public:
-    LogViewer(QWidget *parent = nullptr);
+    LogViewer(QWidget *parent = nullptr);//, ecuManager *ecu_manager = nullptr);
     ~LogViewer();
+    QPushButton *menuButton;
 
 private slots:
     void realtimeDataSlot();
@@ -43,6 +45,7 @@ private slots:
 
     void on_hsb_xRange_sliderPressed();
     void showPlot(int state);
+    void LogViewer::setupWindow();
 
 public slots:
     void logReady(QVector<float> scaledValues);

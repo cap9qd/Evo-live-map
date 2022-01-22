@@ -9,8 +9,9 @@ commDeviceWB::~commDeviceWB()
 {
 
 }
-
+/*
 commDeviceWB::~commDeviceWB()
 {
 
 }
+*/

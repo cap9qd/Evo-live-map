@@ -27,7 +27,7 @@
 #include "widgets/hexEditor/qhexedit/qhexedit.h"
 #include "widgets/hexEditor/hexeditor.h"
 #include "widgets/gauge_widget.h"
-
+#include "widgets/logViewer/logviewer.h"
 
 #include "widgets/ecuManager.h"
 #include "comm-device-interface/devicemanager.h"
@@ -79,6 +79,7 @@ private:
     commParamWidget cpW;
     hexEditor *hexEdit;
     gaugeWidget wbWgt{"           = Wideband =           ", 4};
+    LogViewer *logView;
 
     //======================== widget lists =================================
     QSet<gaugeWidget*> gauge_widget_set;

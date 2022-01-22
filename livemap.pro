@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 CONFIG += c++11
-QT       += core gui xml serialport
+QT       += core gui xml serialport printsupport
 
 GIT_VERSION = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
 DEFINES += GIT_VERSION=\\\"$$GIT_VERSION\\\"

@@ -238,9 +238,7 @@ void ecuDefinition::getMUTparam(const QDomElement &element)
 
             _mut_param.name = el.attribute("name");
 
-            //_mut_param.unit = scaling_qmap.value(el.attribute("scaling")).units;
-
-            ++RAM_MUT_count;
+            //++RAM_MUT_count;
             RAM_MUT.insert(_mut_param.number, _mut_param );
         }
         node = node.nextSibling();

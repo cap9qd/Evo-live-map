@@ -1,10 +1,32 @@
 #include "logviewer.h"
 #include "ui_logviewer.h"
 
-LogViewer::LogViewer(QWidget *parent)
+LogViewer::LogViewer(QWidget *parent)//, ecuManager *ecu_manager)
     : QDialog(parent)
     , ui(new Ui::LogViewer)
 {
+
+    //connect(ecu_manager, &ecuManager::logReady, this, &LogViewer::logReady);
+    /*
+    //connect(parent, &ecuManager::ecu_connected, &logView, &LogViewer::ecuConnected);
+
+    //=============
+    // for menubox
+    //------------
+    QHBoxLayout *layout = new QHBoxLayout;
+    QPushButton *pb = new QPushButton("LogView");
+    layout->addWidget(pb,0);
+    setLayout(layout);
+    setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Expanding );
+    resize(200, 200);
+    connect(pb, &QPushButton::clicked, this, &LogViewer::setupWindow);
+    //---------
+    //===========
+    */
+
+    menuButton = new QPushButton("LogView");
+    connect(menuButton, &QPushButton::clicked, this, &LogViewer::show);
+
     ui->setupUi(this);
 
     ui->statusBar->setText("");
@@ -31,72 +53,6 @@ LogViewer::LogViewer(QWidget *parent)
 
     ui->hsb_xRange->setRange(0, xSpan*10.0);
 }
-/*
-void LogViewer::realtimeDataSlot()
-{
-    static QTime time(QTime::currentTime());
-    // calculate two new data points:
-    double key = time.elapsed()/1000.0; // time elapsed since start of demo, in seconds
-    static double lastPointKey = 0;
-    static long totalSize = 0;
-    // calculate frames per second:
-    static double lastFpsKey;
-    static int frameCount;
-
-    if (!plotReady)
-        return;
-
-    if (key-lastPointKey > (0.002)) // at most add point every 2 ms
-    {
-        std::uniform_real_distribution<double> dist(0.001, 1.0);
-
-        QCPRange xRange = ui->plot->xAxis->range();
-        //qDebug() << tr("Current Plot X-Axis Range: [%1,%2] | Size: %3 sec").arg(xRange.lower).arg(xRange.upper).arg(xRange.upper-xRange.lower);
-        // add data to lines:
-        totalSize = 0;
-        for(int i = 0; i < maxPlots; ++i)
-        {
-            double randAdd = dist(*QRandomGenerator::global());
-            ui->plot->graph(i)->addData(key, qSin(key)+randAdd*randAmp[i]*qSin(key/randTime[i]));
-            if(!pauseUpdate)
-            {
-                ui->plot->graph(i)->data()->removeBefore(key-(xRange.upper-xRange.lower)-(key-lastPointKey));
-                ui->plot->graph(i)->rescaleAxes(true);
-            } else {
-                ui->plot->graph(i)->data()->removeBefore(key-(xRange.upper-xRange.lower)*10.0);
-            }
-            totalSize += ui->plot->graph(i)->data()->size();
-
-            //enable/disable based on checkbox...
-            ui->plot->graph(i)->setVisible(plotVisibleCB[i]->isChecked());
-        }
-        //ui->plot->graph(0)->addData(key, qSin(key)+qrand()/(double)RAND_MAX*1*qSin(key/0.3843));
-        //ui->plot->graph(1)->addData(key, qCos(key)+qrand()/(double)RAND_MAX*0.5*qSin(key/0.4364));
-        // rescale value (vertical) axis to fit the current data:
-        //ui->customPlot->graph(0)->rescaleValueAxis();
-        //ui->customPlot->graph(1)->rescaleValueAxis(true);
-        qDebug() << tr("PlotTime = %1 sec (%2 Hz)").arg(key-lastPointKey).arg(1.0/(key-lastPointKey));
-        lastPointKey = key;
-        ++frameCount;
-
-        // make key axis range scroll with the data (at a constant range size of 8):
-        ui->plot->xAxis->setRange(key, xSpan, Qt::AlignRight);
-
-        if(!pauseUpdate)
-            ui->plot->replot();
-
-        if (key-lastFpsKey > 2) // average fps over 2 seconds
-        {
-            ui->statusBar->setText(
-                QString("%1 FPS, Total Data points: %2")
-                .arg(frameCount/(key-lastFpsKey), 0, 'f', 3)
-                .arg(totalSize));
-          lastFpsKey = key;
-          frameCount = 0;
-        }
-    }
-}
-*/
 
 double LogViewer::scaleDouble(double in, double iMin, double iMax, double oMin, double oMax)
 {
@@ -193,6 +149,8 @@ void LogViewer::logReady(QVector<float> scaledValues)
     static double lastFpsKey;
     static int frameCount;
 
+    qDebug() << tr("LogViewer::logReady");
+
     if(!plotReady)
         return;
 
@@ -269,17 +227,17 @@ QString LogViewer::SearchFiles(QString path, QString CalID)       // Для по
 
 void LogViewer::forceTestRamMut()
 {
-    ecu_definition *_ecu_definition = new ecu_definition;
+    ecuDefinition *ecuDef = new ecuDefinition;
     QString romID = ui->le_ecuid->text();
 
-    if (!_ecu_definition->fromFile(SearchFiles(QApplication::applicationDirPath() + "/xml/", romID)))
+    if (!ecuDef->fromFile(SearchFiles(QApplication::applicationDirPath() + "/xml/", romID)))
     {
-        delete _ecu_definition;
+        delete ecuDef;
         qDebug() << "XML NOT FOUND!";
         return;
     }
     //Send RAM_MUT to self
-    ecuRamMut(_ecu_definition->RAM_MUT);
+    ecuRamMut(ecuDef->RAM_MUT);
 
     //Start fake data based on RAM_MUT
     connect(&dataTimer, &QTimer::timeout, this, &LogViewer::realtimeDataSlot);

@@ -15,7 +15,7 @@ QElapsedTimer t;
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-QThread::currentThread()->setPriority(QThread::TimeCriticalPriority);
+    QThread::currentThread()->setPriority(QThread::TimeCriticalPriority);
     app.setApplicationDisplayName(QString("livemap by eulle@ya.ru ver %1").arg(GIT_VERSION));
     qDebug() << QString("Version: %1").arg(GIT_VERSION);
     //========================================================================================
@@ -34,8 +34,6 @@ QThread::currentThread()->setPriority(QThread::TimeCriticalPriority);
     app.installNativeEventFilter(&usbFilter);
 
     mainWindow.show();
-
-    //logView.show();
 
     return app.exec();
 }
