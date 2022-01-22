@@ -24,8 +24,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     colorFromFile("C:\\Program Files (x86)\\OpenECU\\EcuFlash\\colormaps\\COLDFIRE.MAP") ;
     //=====================================================================================
 
-    logView = new LogViewer(&_ecuManager);
-    connect(&_ecuManager, &ecuManager::logReady,     logView, &LogViewer::logReady);
+    logView = new LogViewer(this, &_ecuManager);
+    //connect(&_ecuManager, &ecuManager::logReady,     logView, &LogViewer::logReady);
     //connect(&_ecuManager, &ecuManager::ecu_connected, logView, &LogViewer::ecuConnected);
 
     _ecuManager.addWidget(logView->menuButton);

@@ -22,7 +22,7 @@ class LogViewer : public QDialog
     Q_OBJECT
 
 public:
-    LogViewer(QWidget *parent = nullptr);//, ecuManager *ecu_manager = nullptr);
+    LogViewer(QWidget *parent = nullptr, ecuManager *ecu_manager = nullptr);
     ~LogViewer();
     QPushButton *menuButton;
 
@@ -52,6 +52,7 @@ public slots:
     void ecuRamMut(QVector<mutParam> ramMut);
     void showWin();
     void horzScrollBarChanged(int value);
+    void ecuConnected();
 
 private:
     void forceTestRamMut();

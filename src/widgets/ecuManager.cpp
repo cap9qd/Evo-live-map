@@ -13,6 +13,8 @@ ecuManager::ecuManager(QWidget *parent) : QToolBar(parent)
     connect(&ECUdef, &ecuDefinition::ecu_connected, this, &ecuManager::ecuConnected);
     connect(&ECUdef, &ecuDefinition::create_table, this, &ecuManager::create_table);
 
+    connect(&ECUdef, &ecuDefinition::logReady, this, &ecuManager::logReady);
+
     //setProto(0);
 
     //=============================================================================
@@ -74,6 +76,7 @@ void ecuManager::ecuConnected()
     lockReset( false);
     a_start_action->setText("Stop");
     emit ecu_connected();
+    emit setRamMut(ECUdef.RAM_MUT);
 }
 
 void ecuManager::startAction()

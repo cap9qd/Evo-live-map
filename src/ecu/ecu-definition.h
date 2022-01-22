@@ -82,7 +82,6 @@ signals:
     void ecu_connected();
     void disConnectECUaction();
     void create_table(mapDefinition*);
-
     void Log(QString);
 
     void logReady(QVector<float>);

@@ -1,15 +1,16 @@
 #include "logviewer.h"
 #include "ui_logviewer.h"
 
-LogViewer::LogViewer(QWidget *parent)//, ecuManager *ecu_manager)
+LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
     : QDialog(parent)
     , ui(new Ui::LogViewer)
 {
 
-    //connect(ecu_manager, &ecuManager::logReady, this, &LogViewer::logReady);
-    /*
-    //connect(parent, &ecuManager::ecu_connected, &logView, &LogViewer::ecuConnected);
+    connect(ecu_manager, &ecuManager::logReady,     this, &LogViewer::logReady);
+    connect(ecu_manager, &ecuManager::setRamMut,    this, &LogViewer::ecuRamMut);
+    connect(ecu_manager, &ecuManager::ecuConnected, this, &LogViewer::ecuConnected);
 
+    /*
     //=============
     // for menubox
     //------------
@@ -53,6 +54,13 @@ LogViewer::LogViewer(QWidget *parent)//, ecuManager *ecu_manager)
 
     ui->hsb_xRange->setRange(0, xSpan*10.0);
 }
+
+void LogViewer::ecuConnected()
+{
+    qDebug() << "LogViewer::ecuConnected!";
+}
+
+
 
 double LogViewer::scaleDouble(double in, double iMin, double iMax, double oMin, double oMax)
 {
@@ -149,7 +157,7 @@ void LogViewer::logReady(QVector<float> scaledValues)
     static double lastFpsKey;
     static int frameCount;
 
-    qDebug() << tr("LogViewer::logReady");
+    //qDebug() << tr("LogViewer::logReady");
 
     if(!plotReady)
         return;
@@ -210,6 +218,7 @@ void LogViewer::logReady(QVector<float> scaledValues)
 
 void LogViewer::ecuRamMut(QVector<mutParam> ramMut)
 {
+    qDebug() << "LogViewer::ecuRamMut";
     RAM_MUT = ramMut;
     configureMut();
 }
@@ -274,13 +283,21 @@ void LogViewer::configureMut()
     int gBoxSize = 200;
     for(int i = 0; i < RAM_MUT.size(); ++i)
     {
-        qDebug() << tr("%1: [%2:%3]").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.min).arg(RAM_MUT.at(i).scaling.max);
+        //qDebug() << tr("%1: [%2:%3]").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.min).arg(RAM_MUT.at(i).scaling.max);
+
+        /*
+        //===========================================
+        //Tried each on own axis...didnt work well
+        //-------------------------------------------
         //Give each signal it's own y-axis for scaling
-        //QCPAxis *addAxis = ui->plot->axisRect()->addAxis(QCPAxis::AxisType::atBottom);//atLeft);
+        QCPAxis *addAxis = ui->plot->axisRect()->addAxis(QCPAxis::AxisType::atBottom);//atLeft);
         //Add graph with new axis
-        //addAxis->setVisible(false);
-        //connect(ui->plot->yAxis, SIGNAL(rangeChanged(QCPRange)), addAxis, SLOT(setRange(QCPRange)));
-        //ui->plot->addGraph(addAxis, ui->plot->xAxis);
+        addAxis->setVisible(false);
+        connect(ui->plot->yAxis, SIGNAL(rangeChanged(QCPRange)), addAxis, SLOT(setRange(QCPRange)));
+        ui->plot->addGraph(addAxis, ui->plot->xAxis);
+        //--------------------------------------------
+        //============================================
+        */
         ui->plot->addGraph();
 
         //Set pen color to random...
@@ -340,7 +357,7 @@ void LogViewer::configureMut()
 
         hLayout->addWidget(lcdNumbers.at(i), 2);
         gbLayout->addLayout(hLayout);
-        qDebug() << tr("%1 : %2 : %3").arg(plotVisibleCB.at(i)->sizeHint().width()).arg(line->sizeHint().width()).arg(lcdNumbers.at(i)->sizeHint().width());
+        //qDebug() << tr("%1 : %2 : %3").arg(plotVisibleCB.at(i)->sizeHint().width()).arg(line->sizeHint().width()).arg(lcdNumbers.at(i)->sizeHint().width());
         gBoxSize = qMax(gBoxSize, plotVisibleCB.at(i)->sizeHint().width() + 25 + lcdNumbers.at(i)->sizeHint().width() + 20);
     }
 
