@@ -320,11 +320,18 @@ void LogViewer::configureMut()
         //connect(ui->plot->yAxis, SIGNAL(rangeChanged(QCPRange)), addAxis, SLOT(setRange(QCPRange)));
         //ui->plot->addGraph(addAxis, ui->plot->xAxis);
         ui->plot->addGraph();
+
         //Set pen color to random...
         QColor lineColor = QColor( qrand() % 256, qrand() % 256, qrand() % 256 );
         ui->plot->graph(i)->setPen(QPen(lineColor));
+
         //Make visible...
         ui->plot->graph(i)->setVisible(true);
+
+        //Set brush to color area under curve; (more of a thought for Knock)
+        QColor brushColor = QColor(lineColor);
+        brushColor.setAlpha(0);
+        ui->plot->graph(i)->setBrush(QBrush(brushColor));
 
         QHBoxLayout *hLayout = new QHBoxLayout();
         //Setup hide plot checkboxes
@@ -346,6 +353,8 @@ void LogViewer::configureMut()
 
         line->setMaximumWidth(25);
         line->setMinimumWidth(25);
+        line->setLineWidth(15);
+        line->setMidLineWidth(15);
 
         QPalette palette = line->palette();
         palette.setColor(QPalette::WindowText, lineColor);
@@ -369,7 +378,8 @@ void LogViewer::configureMut()
 
         hLayout->addWidget(lcdNumbers.at(i), 2);
         gbLayout->addLayout(hLayout);
-        gBoxSize = qMax(gBoxSize, plotVisibleCB.at(i)->sizeHint().width() + line->sizeHint().width() + lcdNumbers.at(i)->sizeHint().width() + 10);
+        qDebug() << tr("%1 : %2 : %3").arg(plotVisibleCB.at(i)->sizeHint().width()).arg(line->sizeHint().width()).arg(lcdNumbers.at(i)->sizeHint().width());
+        gBoxSize = qMax(gBoxSize, plotVisibleCB.at(i)->sizeHint().width() + 25 + lcdNumbers.at(i)->sizeHint().width() + 20);
     }
 
     ui->gb_params->setLayout(gbLayout);
@@ -382,7 +392,6 @@ void LogViewer::configureMut()
     qDebug() << "";
 
     updatePause();
-
 
     plotReady = true;
     pauseUpdate = false;
