@@ -5,12 +5,45 @@
 #-------------------------------------------------
 
 CONFIG += c++11
-#CONFIG += qhexedit4
-#CONFIG += qwt
-#CONFIG   += rtti
 QT       += core gui xml serialport
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
+GIT_VERSION = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
+DEFINES += GIT_VERSION=\\\"$$GIT_VERSION\\\"
+VERSION = $$GIT_VERSION
+win32 {
+    VERSION ~= s/-\d+-g[a-f0-9]{6,}//
+}
+
+CONFIG(release, release|debug){
+            win32-g++ {
+                            QMAKE_CXXFLAGS  += -flto -funroll-loops
+                            CONFIG += -static
+                            message("release mode")
+                        }
+                    }
+win32-g++ {
+
+                QMAKE_CXXFLAGS  += -fforce-addr
+                QMAKE_CXXFLAGS  += -m32 -Ofast -march=core2 -mtune=core2
+                QMAKE_CXXFLAGS  += -mfpmath=sse
+                QMAKE_CXXFLAGS  += -msse4
+##                LIBS += -L$$PWD/mingw-dll -lqwt
+##                CONFIG(release, debug|release):QMAKE_LFLAGS_RELEASE += -static -static-libgcc
+            }
+win32-msvc {
+#                QMAKE_LFLAGS_RELEASE += /LTCG
+                QMAKE_CXXFLAGS  += /O2
+                QMAKE_CXXFLAGS  += /arch:AVX
+                QMAKE_CXXFLAGS  += /Arch: SSE2
+                QMAKE_CFLAGS  += /O2
+                QMAKE_CFLAGS  += /arch:AVX
+                QMAKE_CFLAGS  += /Arch: SSE2
+
+#                LIBS += -L$$PWD/msvc-dll -lqwt
+            }
+
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 DEFINES += QT_DEPRECATED_WARNINGS
 
 GIT_VERSION = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
@@ -41,7 +74,9 @@ SOURCES += src/main.cpp\
     src/DMA-proto/jcsbanksDMA.cpp \
     src/DMA-proto/stockDMA.cpp \
     src/comm-device-interface/op20.cpp \
-    src/controller.cpp \
+    src/widgets/ecuManager.cpp \
+    src/wideband/op20wb.cpp \
+    src/DMA-proto/pollhelper.cpp \
     src/deviceNativeFilter.cpp \
     src/ecu/ecu-definition.cpp \
     src/ecu/rawstockmsg.cpp \
@@ -56,7 +91,6 @@ SOURCES += src/main.cpp\
     src/wideband/serialwb.cpp \
     src/wideband/wb-manager.cpp \
     src/wideband/wb-proto.cpp \
-    src/wblogger.cpp \
     src/widgets/hexEditor/qhexedit/chunks.cpp \
     src/widgets/hexEditor/qhexedit/commands.cpp \
     src/widgets/hexEditor/qhexedit/qhexedit.cpp \
@@ -70,7 +104,7 @@ SOURCES += src/main.cpp\
     src/widgets/gauge_widget.cpp \
     src/widgets/logViewer/logviewer.cpp \
     src/widgets/logViewer/qcustomplot.cpp \
-    src/widgets/maintoolbar.cpp \
+#   src/widgets/maintoolbar.cpp \
     src/widgets/mapWidget/mapmodel.cpp \
     src/widgets/mapWidget/mapview.cpp \
     src/widgets/mapWidget/mapwidget.cpp
@@ -80,7 +114,9 @@ HEADERS  += src/mainwindow.h \
     src/DMA-proto/proto-manager.h \
     src/abstract-memory.h \
     src/comm-device-interface/devicemanager.h \
-    src/controller.h \
+    src/widgets/ecuManager.h \
+    src/wideband/op20wb.h \
+    src/DMA-proto/pollhelper.h \
     src/DMA-proto/evoX-DMA.h \
     src/DMA-proto/jcsbanksDMA.h \
     src/DMA-proto/stockDMA.h \
@@ -111,7 +147,6 @@ HEADERS  += src/mainwindow.h \
     src/wideband/serialwb.h \
     src/wideband/wb-manager.h \
     src/wideband/wb-proto.h \
-    src/wblogger.h \
     src/widgets/commParamWidget.h \
     src/widgets/gauge_widget.h \
     src/widgets/hexEditor/qhexedit/chunks.h \
@@ -120,7 +155,7 @@ HEADERS  += src/mainwindow.h \
     src/widgets/hexEditor/hexeditor.h \
     src/widgets/logViewer/logviewer.h \
     src/widgets/logViewer/qcustomplot.h \
-    src/widgets/maintoolbar.h \
+#    src/widgets/maintoolbar.h \
     src/widgets/mapWidget/mapmodel.h \
     src/widgets/mapWidget/mapview.h \
     src/widgets/mapWidget/mapwidget.h
@@ -140,27 +175,7 @@ FORMS    += mainwindow.ui \
 LIBS += -lSetupapi
 LIBS += -ladvapi32
 LIBS += -luser32
-CONFIG(release, debug|release):CONFIG += -static
-win32-g++ {
-                QMAKE_CXXFLAGS  += -flto -funroll-loops
-                QMAKE_CXXFLAGS  += -fforce-addr
-                QMAKE_CXXFLAGS  += -m32 -Ofast -march=core2 -mtune=core2
-                #QMAKE_CXXFLAGS  += -mfpmath=sse
-                QMAKE_CXXFLAGS  += -msse4
-#                LIBS += -L$$PWD/mingw-dll -lqwt
-#                CONFIG(release, debug|release):QMAKE_LFLAGS_RELEASE += -static -static-libgcc
-            }
-win32-msvc {
-#                QMAKE_LFLAGS_RELEASE += /LTCG
-                QMAKE_CXXFLAGS  += /O2
-                QMAKE_CXXFLAGS  += /arch:AVX
-                QMAKE_CXXFLAGS  += /Arch: SSE2
-                QMAKE_CFLAGS  += /O2
-                QMAKE_CFLAGS  += /arch:AVX
-                QMAKE_CFLAGS  += /Arch: SSE2
 
-#                LIBS += -L$$PWD/msvc-dll -lqwt
-}
 
 DEFINES += QHEXEDIT_EXPORTS
 #DEFINES += QHEXEDIT_IMPORTS
