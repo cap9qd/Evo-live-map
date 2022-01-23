@@ -5,10 +5,13 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
     : QDialog(parent)
     , ui(new Ui::LogViewer)
 {
-
-    connect(ecu_manager, &ecuManager::logReady,     this, &LogViewer::logReady);
-    connect(ecu_manager, &ecuManager::setRamMut,    this, &LogViewer::ecuRamMut);
-    connect(ecu_manager, &ecuManager::ecuConnected, this, &LogViewer::ecuConnected);
+    //============================
+    // Connections to ecu_manager
+    //----------------------------
+    connect(ecu_manager, &ecuManager::logReady,            this, &LogViewer::logReady);
+    connect(ecu_manager, &ecuManager::ecuConnected,        this, &LogViewer::ecuConnected);
+    connect(ecu_manager, &ecuManager::disConnectECUaction, this, &LogViewer::ecuDisconnect);
+    ecuDef_ramMut = ecu_manager->getRamMut();
 
     /*
     //=============
@@ -25,9 +28,14 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
     //===========
     */
 
+    //For menu
     menuButton = new QPushButton("LogView");
     connect(menuButton, &QPushButton::clicked, this, &LogViewer::show);
+    //-----
 
+    //==============
+    // Setup Window
+    //--------------
     ui->setupUi(this);
 
     ui->statusBar->setText("");
@@ -47,7 +55,6 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
         dataTimer.start(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
     } else {}
     connect(ui->hsb_xRange, &QScrollBar::valueChanged, this, &LogViewer::horzScrollBarChanged);
-    //connect(ui->plot->xAxis, &QCPAxis::rangeChanged, this, &LogViewer::xAxisChanged);
 
     updatePause();
     ui->hsb_xRange->setEnabled(pauseUpdate);
@@ -58,9 +65,13 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
 void LogViewer::ecuConnected()
 {
     qDebug() << "LogViewer::ecuConnected!";
+    configure();
 }
 
-
+void LogViewer::ecuDisconnect()
+{
+    qDebug() << "LogViewer::ecuDisconnected!";
+}
 
 double LogViewer::scaleDouble(double in, double iMin, double iMax, double oMin, double oMax)
 {
@@ -80,10 +91,10 @@ void LogViewer::realtimeDataSlot()
 
     double randAdd = 0.0;
 
-    for(int i = 0; i < RAM_MUT.size(); ++i)
+    for(int i = 0; i < ecuDef_ramMut->size(); ++i)
     {
-        oMax = RAM_MUT.at(i).scaling.max;
-        oMin = RAM_MUT.at(i).scaling.min;
+        oMax = ecuDef_ramMut->at(i).scaling.max;
+        oMin = ecuDef_ramMut->at(i).scaling.min;
         randAdd = scaleDouble(dist(*QRandomGenerator::global()), -1.0, 1.0, oMin, oMax)*0.05;
 
         scaledValues.insert(i, scaleDouble(qCos(t), -1.0, 1.0, oMin, oMax) + randAdd);
@@ -109,6 +120,9 @@ void LogViewer::on_btn_pause_clicked()
         else
             ui->hsb_xRange->setRange(firstKey*10.0, lastKey*10.0);
         ui->hsb_xRange->setValue(ui->plot->xAxis->range().center()*10.0);
+        ui->plot->setCursor(QCursor(Qt::CrossCursor));
+    } else {
+        ui->plot->setCursor(QCursor(Qt::CrossCursor));
     }
 }
 
@@ -177,7 +191,7 @@ void LogViewer::logReady(QVector<float> scaledValues)
         for(int i = 0; i < scaledValues.size(); ++i)
         {
             lcdNumbers.at(i)->display(scaledValues.at(i));
-            ui->plot->graph(i)->addData(key, scaleDouble(scaledValues.at(i), RAM_MUT.at(i).scaling.min, RAM_MUT.at(i).scaling.max, 0.0, 100.0));
+            ui->plot->graph(i)->addData(key, scaleDouble(scaledValues.at(i), ecuDef_ramMut->at(i).scaling.min, ecuDef_ramMut->at(i).scaling.max, 0.0, 100.0));
             if(!pauseUpdate)
             {
                 lastKey = key;
@@ -216,11 +230,12 @@ void LogViewer::logReady(QVector<float> scaledValues)
     }
 }
 
+/*
 void LogViewer::ecuRamMut(QVector<mutParam> ramMut)
 {
     qDebug() << "LogViewer::ecuRamMut";
-    RAM_MUT = ramMut;
-    configureMut();
+    ecuDef_ramMut = &ramMut;
+    configure();
 }
 
 QString LogViewer::SearchFiles(QString path, QString CalID)       // Для поиска файлов в каталоге
@@ -233,20 +248,25 @@ QString LogViewer::SearchFiles(QString path, QString CalID)       // Для по
     else
         return path + listFiles.at(0);
 }
+*/
 
-void LogViewer::forceTestRamMut()
+void LogViewer::forceTest()
 {
     ecuDefinition *ecuDef = new ecuDefinition;
     QString romID = ui->le_ecuid->text();
 
-    if (!ecuDef->fromFile(SearchFiles(QApplication::applicationDirPath() + "/xml/", romID)))
+    if (!ecuDef->fromROMID(romID))
     {
         delete ecuDef;
         qDebug() << "XML NOT FOUND!";
         return;
     }
-    //Send RAM_MUT to self
-    ecuRamMut(ecuDef->RAM_MUT);
+    ecuDef_ramMut = new QVector<mutParam>;
+    for(int i = 0; i < ecuDef->RAM_MUT.size(); ++i)
+        ecuDef_ramMut->insert(i, ecuDef->RAM_MUT.at(i));
+    delete ecuDef;
+
+    ecuConnected();
 
     //Start fake data based on RAM_MUT
     connect(&dataTimer, &QTimer::timeout, this, &LogViewer::realtimeDataSlot);
@@ -259,7 +279,7 @@ void LogViewer::showWin()
     this->show();
 }
 
-void LogViewer::configureMut()
+void LogViewer::configure()
 {
     QVBoxLayout *gbLayout = new QVBoxLayout();
 
@@ -281,9 +301,9 @@ void LogViewer::configureMut()
     ui->plot->yAxis->setRange(-1.2, 1.2);
 
     int gBoxSize = 200;
-    for(int i = 0; i < RAM_MUT.size(); ++i)
+    for(int i = 0; i < ecuDef_ramMut->size(); ++i)
     {
-        //qDebug() << tr("%1: [%2:%3]").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.min).arg(RAM_MUT.at(i).scaling.max);
+        //qDebug() << tr("%1: [%2:%3]").arg(ecuDef_ramMut->at(i).name).arg(ecuDef_ramMut->at(i).scaling.min).arg(ecuDef_ramMut->at(i).scaling.max);
 
         /*
         //===========================================
@@ -314,7 +334,7 @@ void LogViewer::configureMut()
 
         QHBoxLayout *hLayout = new QHBoxLayout();
         //Setup hide plot checkboxes
-        plotVisibleCB.insert(i, new QCheckBox(tr("%1 (%2)").arg(RAM_MUT.at(i).name).arg(RAM_MUT.at(i).scaling.units)));
+        plotVisibleCB.insert(i, new QCheckBox(tr("%1 (%2)").arg(ecuDef_ramMut->at(i).name).arg(ecuDef_ramMut->at(i).scaling.units)));
         plotVisibleCB.at(i)->setChecked(1);
         plotVisibleCB.at(i)->setCheckable(1);
 
@@ -377,7 +397,8 @@ void LogViewer::configureMut()
     updatePause();
 }
 
-
+/*
+ * OLD TEST CODE
 void LogViewer::configure()
 {
     QVBoxLayout *gbLayout = new QVBoxLayout();
@@ -387,13 +408,12 @@ void LogViewer::configure()
 
     for(int i = 0; i < maxPlots; ++i)
     {
-        /*
-        randAmp[i]  = distAmp(*QRandomGenerator::global());
-        randTime[i] = distTime(*QRandomGenerator::global());
 
-        qDebug() << tr("randAmp[%1]  = ").arg(i) << tr("%1").arg(randAmp[i]);
-        qDebug() << tr("randTime[%1] = ").arg(i) << tr("%1").arg(randTime[i]);
-        */
+        //randAmp[i]  = distAmp(*QRandomGenerator::global());
+        //randTime[i] = distTime(*QRandomGenerator::global());
+        //qDebug() << tr("randAmp[%1]  = ").arg(i) << tr("%1").arg(randAmp[i]);
+        //qDebug() << tr("randTime[%1] = ").arg(i) << tr("%1").arg(randTime[i]);
+
         ui->plot->addGraph(); // blue line
         //ui->plot->graph(i)->setPen(QPen(QColor(40, 110, 255)));
         ui->plot->graph(i)->setPen(QPen( QColor( qrand() % 256, qrand() % 256, qrand() % 256 )));
@@ -437,10 +457,11 @@ void LogViewer::configure()
     pauseUpdate = false;
     updatePause();
 }
+*/
 
 void LogViewer::on_pb_frcEcuId_clicked()
 {
-    forceTestRamMut();
+    forceTest();
 }
 
 

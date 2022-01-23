@@ -26,6 +26,8 @@ class ecuManager : public QToolBar
 public:
     explicit ecuManager(QWidget *parent = nullptr);
     ~ecuManager();
+    QVector<mutParam>* getRamMut();
+
 
 public slots:
     void setCommDevice(comm_device_interface *dev);
@@ -60,7 +62,6 @@ signals:
     void ecu_connected();
     void disConnectECUaction();
     void create_table(mapDefinition*);
-    void setRamMut(QVector<mutParam>);
 
     void Log(QString);
     void logReady(QVector<float>);

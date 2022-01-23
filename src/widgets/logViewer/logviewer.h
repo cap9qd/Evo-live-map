@@ -47,36 +47,37 @@ private slots:
     void showPlot(int state);
     void LogViewer::setupWindow();
 
+//From ecuManager
 public slots:
     void logReady(QVector<float> scaledValues);
-    void ecuRamMut(QVector<mutParam> ramMut);
+    void ecuConnected();
+    void ecuDisconnect();
+
+private slots:
     void showWin();
     void horzScrollBarChanged(int value);
-    void ecuConnected();
+
+signals:
+    void Log(QString);
 
 private:
-    void forceTestRamMut();
-    enum{maxPlots = 16};
     Ui::LogViewer *ui;
+    bool widgetDebug = false;
+    void configure();
+    void forceTest();
+    double scaleDouble(double in, double iMin, double iMax, double oMin, double oMax);
+    void updatePause();
+
+private:
     QTimer dataTimer;
-    //double randAmp[maxPlots];
-    //double randTime[maxPlots];
     QVector<QCheckBox*> plotVisibleCB;
     QVector<QLCDNumber*> lcdNumbers;
     double refreshHz = 10.0;
     bool pauseUpdate = true;
-    void updatePause();
     double xSpan = 30.0;
-    //Set to true to run timed test via main.cpp
-    bool widgetDebug = false;
     bool plotReady = false;
-    QVector<mutParam> RAM_MUT;
-    quint32 RAM_MUT_count = 0;
-    void configure();
-    void configureMut();
+    QVector<mutParam> *ecuDef_ramMut;
     QElapsedTimer plotTimer;
-    QString LogViewer::SearchFiles(QString path, QString CalID);
-    double scaleDouble(double in, double iMin, double iMax, double oMin, double oMax);
     double lastKey;
     double firstKey;
 

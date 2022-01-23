@@ -25,8 +25,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     //=====================================================================================
 
     logView = new LogViewer(this, &_ecuManager);
-    //connect(&_ecuManager, &ecuManager::logReady,     logView, &LogViewer::logReady);
-    //connect(&_ecuManager, &ecuManager::ecu_connected, logView, &LogViewer::ecuConnected);
 
     _ecuManager.addWidget(logView->menuButton);
 }

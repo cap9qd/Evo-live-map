@@ -76,7 +76,6 @@ void ecuManager::ecuConnected()
     lockReset( false);
     a_start_action->setText("Stop");
     emit ecu_connected();
-    emit setRamMut(ECUdef.RAM_MUT);
 }
 
 void ecuManager::startAction()
@@ -133,4 +132,8 @@ void ecuManager::lockConnect(bool lockFlag)
 void ecuManager::lockReset(bool lockFlag)
 {
     a_ramReset->setDisabled(lockFlag);
+}
+QVector<mutParam> *ecuManager::getRamMut()
+{
+    return &ECUdef.RAM_MUT;
 }
