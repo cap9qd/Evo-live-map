@@ -29,13 +29,26 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
     */
 
     //For menu
-    menuButton = new QPushButton();
-
-    menuButton->setIcon(QIcon( ":ico/logview.png" ));
-    QSize iSize(150, 150);
+    /*
+    menuButton = new QPushButton("LogPlotter");
+    menuButton->setIcon(QIcon(":ico/logview.png"));
+    QSize iSize(175, 175);
     menuButton->setIconSize(iSize);
+    */
+    QToolButton *menuButton = new QToolButton(this);
+    QBoxLayout  *menuLayout = new QBoxLayout(QBoxLayout::TopToBottom);
+    menuWidget = new QWidget();
 
+    menuButton->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    menuButton->setIcon(QIcon(":ico/logview.png"));
+    menuButton->setIconSize(QSize(150, 150));
     connect(menuButton, &QPushButton::clicked, this, &LogViewer::show);
+    QLabel *menuLabel = new QLabel("LogPlotter");
+    menuLabel->setAlignment(Qt::AlignCenter);
+
+    menuLayout->addWidget(menuLabel);
+    menuLayout->addWidget(menuButton);
+    menuWidget->setLayout(menuLayout);
     //-----
 
     //==============

@@ -24,7 +24,10 @@ class LogViewer : public QWidget
 public:
     LogViewer(QWidget *parent = nullptr, ecuManager *ecu_manager = nullptr);
     ~LogViewer();
-    QPushButton *menuButton;
+    //QToolButton *menuButton;
+    //QBoxLayout  *menuLayout;
+    QWidget     *menuWidget;
+    //QPushButton *menuButton;
 
 private slots:
     void realtimeDataSlot();
