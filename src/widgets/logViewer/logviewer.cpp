@@ -1,16 +1,16 @@
 #include "logviewer.h"
 #include "ui_logviewer.h"
 
-LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
+LogPlotter::LogPlotter(QWidget *parent, ecuManager *ecu_manager)
     : QWidget(nullptr, Qt::Window | Qt::WindowCloseButtonHint )
-    , ui(new Ui::LogViewer)
+    , ui(new Ui::LogPlotter)
 {
     //============================
     // Connections to ecu_manager
     //----------------------------
-    connect(ecu_manager, &ecuManager::logReady,            this, &LogViewer::logReady);
-    connect(ecu_manager, &ecuManager::ecuConnected,        this, &LogViewer::ecuConnected);
-    connect(ecu_manager, &ecuManager::ecuDisconnect,       this, &LogViewer::ecuDisconnect);
+    connect(ecu_manager, &ecuManager::logReady,            this, &LogPlotter::logReady);
+    connect(ecu_manager, &ecuManager::ecuConnected,        this, &LogPlotter::ecuConnected);
+    connect(ecu_manager, &ecuManager::ecuDisconnect,       this, &LogPlotter::ecuDisconnect);
     ecuDef_ramMut = ecu_manager->getRamMut();
 
     /*
@@ -23,33 +23,10 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
     setLayout(layout);
     setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Expanding );
     resize(200, 200);
-    connect(pb, &QPushButton::clicked, this, &LogViewer::setupWindow);
+    connect(pb, &QPushButton::clicked, this, &LogPlotter::setupWindow);
     //---------
     //===========
     */
-
-    //For menu
-    /*
-    menuButton = new QPushButton("LogPlotter");
-    menuButton->setIcon(QIcon(":ico/logview.png"));
-    QSize iSize(175, 175);
-    menuButton->setIconSize(iSize);
-    */
-    QToolButton *menuButton = new QToolButton(this);
-    QBoxLayout  *menuLayout = new QBoxLayout(QBoxLayout::TopToBottom);
-    menuWidget = new QWidget();
-
-    menuButton->setToolButtonStyle(Qt::ToolButtonIconOnly);
-    menuButton->setIcon(QIcon(":ico/logview.png"));
-    menuButton->setIconSize(QSize(150, 150));
-    connect(menuButton, &QPushButton::clicked, this, &LogViewer::show);
-    QLabel *menuLabel = new QLabel("LogPlotter");
-    menuLabel->setAlignment(Qt::AlignCenter);
-
-    menuLayout->addWidget(menuLabel);
-    menuLayout->addWidget(menuButton);
-    menuWidget->setLayout(menuLayout);
-    //-----
 
     //==============
     // Setup Window
@@ -69,10 +46,10 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
     // setup a timer that repeatedly calls MainWindow::realtimeDataSlot:
     if(widgetDebug) {
         configure();
-        connect(&dataTimer, &QTimer::timeout, this, &LogViewer::realtimeDataSlot);
+        connect(&dataTimer, &QTimer::timeout, this, &LogPlotter::realtimeDataSlot);
         dataTimer.start(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
     } else {}
-    connect(ui->hsb_xRange, &QScrollBar::valueChanged, this, &LogViewer::horzScrollBarChanged);
+    connect(ui->hsb_xRange, &QScrollBar::valueChanged, this, &LogPlotter::horzScrollBarChanged);
 
     updatePause();
     ui->hsb_xRange->setEnabled(pauseUpdate);
@@ -80,23 +57,26 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
     ui->hsb_xRange->setRange(0, xSpan*10.0);
 }
 
-void LogViewer::ecuConnected()
+void LogPlotter::setupWindow()
+{}
+
+void LogPlotter::ecuConnected()
 {
-    qDebug() << "LogViewer::ecuConnected!";
+    qDebug() << "LogPlotter::ecuConnected!";
     configure();
 }
 
-void LogViewer::ecuDisconnect()
+void LogPlotter::ecuDisconnect()
 {
-    qDebug() << "LogViewer::ecuDisconnected!";
+    qDebug() << "LogPlotter::ecuDisconnected!";
 }
 
-double LogViewer::scaleDouble(double in, double iMin, double iMax, double oMin, double oMax)
+double LogPlotter::scaleDouble(double in, double iMin, double iMax, double oMin, double oMax)
 {
     return((oMax-oMin)/(iMax-iMin)*(in-iMin)+oMin);
 }
 
-void LogViewer::realtimeDataSlot()
+void LogPlotter::realtimeDataSlot()
 {
     QVector<float> scaledValues;
     static double t = 0.0;
@@ -120,13 +100,13 @@ void LogViewer::realtimeDataSlot()
     logReady(scaledValues);
 }
 
-LogViewer::~LogViewer()
+LogPlotter::~LogPlotter()
 {
     delete ui;
     plotReady = false;
 }
 
-void LogViewer::on_btn_pause_clicked()
+void LogPlotter::on_btn_pause_clicked()
 {
     pauseUpdate = !pauseUpdate;
     updatePause();
@@ -144,7 +124,7 @@ void LogViewer::on_btn_pause_clicked()
     }
 }
 
-void LogViewer::updatePause()
+void LogPlotter::updatePause()
 {
     if(pauseUpdate)
         ui->label_pause->setText("PAUSED");
@@ -152,24 +132,24 @@ void LogViewer::updatePause()
         ui->label_pause->setText("RUNNING");
 }
 
-void LogViewer::on_rate_sb_valueChanged(double arg1)
+void LogPlotter::on_rate_sb_valueChanged(double arg1)
 {}
 
-void LogViewer::on_span_sb_valueChanged(double arg1)
+void LogPlotter::on_span_sb_valueChanged(double arg1)
 {}
 
-void LogViewer::on_span_sb_editingFinished()
+void LogPlotter::on_span_sb_editingFinished()
 {
     xSpan = ui->span_sb->value();
 }
 
 
-void LogViewer::on_rate_sb_editingFinished()
+void LogPlotter::on_rate_sb_editingFinished()
 {
 
 }
 
-void LogViewer::showPlot(int state)
+void LogPlotter::showPlot(int state)
 {
     for(int i = 0; i<plotVisibleCB.size(); ++i)
     {
@@ -178,7 +158,7 @@ void LogViewer::showPlot(int state)
     }
 }
 
-void LogViewer::logReady(QVector<float> scaledValues)
+void LogPlotter::logReady(QVector<float> scaledValues)
 {
     static QTime time(QTime::currentTime());
     // calculate two new data points:
@@ -189,7 +169,7 @@ void LogViewer::logReady(QVector<float> scaledValues)
     static double lastFpsKey;
     static int frameCount;
 
-    //qDebug() << tr("LogViewer::logReady");
+    //qDebug() << tr("LogPlotter::logReady");
 
     if(!plotReady)
         return;
@@ -249,14 +229,14 @@ void LogViewer::logReady(QVector<float> scaledValues)
 }
 
 /*
-void LogViewer::ecuRamMut(QVector<mutParam> ramMut)
+void LogPlotter::ecuRamMut(QVector<mutParam> ramMut)
 {
-    qDebug() << "LogViewer::ecuRamMut";
+    qDebug() << "LogPlotter::ecuRamMut";
     ecuDef_ramMut = &ramMut;
     configure();
 }
 
-QString LogViewer::SearchFiles(QString path, QString CalID)       // Для поиска файлов в каталоге
+QString LogPlotter::SearchFiles(QString path, QString CalID)       // Для поиска файлов в каталоге
 {
     // Пытаемся найти правильные файлы, в текущем каталоге
     QStringList listFiles = QDir(path).entryList((CalID + "*.xml ").split(" "), QDir::Files);  //выборка файлов по маскам
@@ -268,7 +248,7 @@ QString LogViewer::SearchFiles(QString path, QString CalID)       // Для по
 }
 */
 
-void LogViewer::forceTest()
+void LogPlotter::forceTest()
 {
     ecuDefinition *ecuDef = new ecuDefinition;
     QString romID = ui->le_ecuid->text();
@@ -287,17 +267,17 @@ void LogViewer::forceTest()
     ecuConnected();
 
     //Start fake data based on RAM_MUT
-    connect(&dataTimer, &QTimer::timeout, this, &LogViewer::realtimeDataSlot);
+    connect(&dataTimer, &QTimer::timeout, this, &LogPlotter::realtimeDataSlot);
     dataTimer.start(1000.0/refreshHz); // Interval 0 means to refresh as fast as possible
 
 }
 
-void LogViewer::showWin()
-{
-    this->show();
-}
+//void LogPlotter::showWin()
+//{
+//    this->show();
+//}
 
-void LogViewer::configure()
+void LogPlotter::configure()
 {
     QVBoxLayout *gbLayout = new QVBoxLayout();
 
@@ -356,7 +336,7 @@ void LogViewer::configure()
         plotVisibleCB.at(i)->setChecked(1);
         plotVisibleCB.at(i)->setCheckable(1);
 
-        connect(plotVisibleCB.at(i), &QCheckBox::stateChanged, this, &LogViewer::showPlot);
+        connect(plotVisibleCB.at(i), &QCheckBox::stateChanged, this, &LogPlotter::showPlot);
 
         //add to group box on left
         hLayout->addWidget(plotVisibleCB.at(i), 0);
@@ -417,7 +397,7 @@ void LogViewer::configure()
 
 /*
  * OLD TEST CODE
-void LogViewer::configure()
+void LogPlotter::configure()
 {
     QVBoxLayout *gbLayout = new QVBoxLayout();
 
@@ -477,19 +457,19 @@ void LogViewer::configure()
 }
 */
 
-void LogViewer::on_pb_frcEcuId_clicked()
+void LogPlotter::on_pb_frcEcuId_clicked()
 {
     forceTest();
 }
 
 
-void LogViewer::on_pb_spanApply_clicked()
+void LogPlotter::on_pb_spanApply_clicked()
 {
-        xSpan = ui->span_sb->value();
+    xSpan = ui->span_sb->value();
 }
 
 
-void LogViewer::on_pb_rateApply_clicked()
+void LogPlotter::on_pb_rateApply_clicked()
 {
     refreshHz = ui->rate_sb->value();
     if(widgetDebug)
@@ -499,12 +479,12 @@ void LogViewer::on_pb_rateApply_clicked()
 }
 
 
-void LogViewer::on_hsb_xRange_sliderReleased()
+void LogPlotter::on_hsb_xRange_sliderReleased()
 {
     ui->plot->replot();
 }
 
-void LogViewer::horzScrollBarChanged(int value)
+void LogPlotter::horzScrollBarChanged(int value)
 {
     double dValue = value / 10.0;
     double xMove = ui->plot->xAxis->range().center()-dValue;
@@ -521,8 +501,42 @@ void LogViewer::horzScrollBarChanged(int value)
     }
 }
 
-void LogViewer::on_hsb_xRange_sliderPressed()
+void LogPlotter::on_hsb_xRange_sliderPressed()
 {
 
 }
 
+LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
+    : QWidget(nullptr)
+{
+    logWin = new LogPlotter(nullptr, ecu_manager);
+
+    //===============================================================
+    //For menu
+    //--------------------------------------------------------------
+    QToolButton *menuButton = new QToolButton(this);
+    QBoxLayout  *menuLayout = new QBoxLayout(QBoxLayout::TopToBottom);
+
+    menuButton->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    menuButton->setIcon(QIcon(":ico/logview.png"));
+    menuButton->setIconSize(QSize(150, 150));
+    connect(menuButton, &QPushButton::clicked, this, &LogViewer::showWin);
+    QLabel *menuLabel = new QLabel("LogPlotter");
+    menuLabel->setAlignment(Qt::AlignCenter);
+
+    menuLayout->addWidget(menuLabel);
+    menuLayout->addWidget(menuButton);
+    setLayout(menuLayout);
+    //--------------------------------------------------------------
+    //===============================================================
+}
+
+LogViewer::~LogViewer()
+{
+
+}
+
+void LogViewer::showWin()
+{
+    logWin->show();
+}

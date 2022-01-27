@@ -14,20 +14,17 @@
 using namespace std;
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class LogViewer; }
+namespace Ui { class LogPlotter; }
 QT_END_NAMESPACE
 
-class LogViewer : public QWidget
+class LogPlotter : public QWidget
 {
     Q_OBJECT
 
 public:
-    LogViewer(QWidget *parent = nullptr, ecuManager *ecu_manager = nullptr);
-    ~LogViewer();
-    //QToolButton *menuButton;
-    //QBoxLayout  *menuLayout;
-    QWidget     *menuWidget;
-    //QPushButton *menuButton;
+    LogPlotter(QWidget *parent = nullptr, ecuManager *ecu_manager = nullptr);
+    ~LogPlotter();
+
 
 private slots:
     void realtimeDataSlot();
@@ -48,7 +45,7 @@ private slots:
 
     void on_hsb_xRange_sliderPressed();
     void showPlot(int state);
-    void LogViewer::setupWindow();
+    void setupWindow();
 
 //From ecuManager
 public slots:
@@ -57,14 +54,13 @@ public slots:
     void ecuDisconnect();
 
 private slots:
-    void showWin();
     void horzScrollBarChanged(int value);
 
 signals:
     void Log(QString);
 
 private:
-    Ui::LogViewer *ui;
+    Ui::LogPlotter *ui;
     bool widgetDebug = false;
     void configure();
     void forceTest();
@@ -84,5 +80,18 @@ private:
     double lastKey;
     double firstKey;
 
+};
+
+class LogViewer : public QWidget
+{
+    Q_OBJECT
+
+public:
+    LogViewer(QWidget *parent = nullptr, ecuManager *ecu_manager = nullptr);
+    ~LogViewer();
+
+private:
+    LogPlotter *logWin;
+    void showWin();
 };
 #endif // LOGVIEWER_H

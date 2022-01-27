@@ -28,8 +28,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     logView = new LogViewer(this, &_ecuManager);
 
-    //_ecuManager.addWidget(logView->menuButton);
-    _ecuManager.addWidget(logView->menuWidget);
+    _ecuManager.addWidget(logView);
     _ecuManager.addSeparator();
 }
 
