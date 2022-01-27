@@ -34,6 +34,7 @@
 #include "DMA-proto/proto-manager.h"
 #include "wideband/wb-manager.h"
 
+#include "widgets/loggermanager.h"
 
 #include "widgets/logViewer/logviewer.h"
 
@@ -60,13 +61,22 @@ public slots:
 
 private slots:
     void deviceEvent(comm_device_interface *devComm);
-    void ecu_connected();
-    void disConnectECUaction();
+    void ecuConnected();
+    void ecuDisconnect();
     void createMap(mapDefinition *dMap);
     void itemChecks(QTreeWidgetItem *item, int column);
 
 private:
     Ui::MainWindow *ui;
+
+    //======================== widget's =================================
+    ecuManager _ecuManager;
+    commParamWidget cpW;
+    loggerManager _loggerManager;
+    hexEditor hexEdit;
+    gaugeWidget wbWgt{"           = Wideband =           ", 4};
+
+    QVector<QColor> colormap;
 
     void setCPW();
     void createMapTree(Map *tab);
@@ -74,19 +84,13 @@ private:
 
     void colorFromFile(QString filename);
 
-    //======================== widget's =================================
-    ecuManager _ecuManager;
-    commParamWidget cpW;
-    hexEditor *hexEdit;
-    gaugeWidget wbWgt{"           = Wideband =           ", 4};
-    LogViewer *logView;
-
     //======================== widget lists =================================
     QSet<gaugeWidget*> gauge_widget_set;
     QToolBar *loggerWidgetBar = nullptr;
-    QVector<QColor> colormap;
     void create_gauge(QString name, mutParam *param);
     void gaugeDelete();
+
+    LogViewer *logView;
 
 signals:
     void _exit();

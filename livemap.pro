@@ -104,7 +104,6 @@ SOURCES += src/main.cpp\
     src/widgets/gauge_widget.cpp \
     src/widgets/logViewer/logviewer.cpp \
     src/widgets/logViewer/qcustomplot.cpp \
-#   src/widgets/maintoolbar.cpp \
     src/widgets/mapWidget/mapmodel.cpp \
     src/widgets/mapWidget/mapview.cpp \
     src/widgets/mapWidget/mapwidget.cpp
@@ -155,7 +154,6 @@ HEADERS  += src/mainwindow.h \
     src/widgets/hexEditor/hexeditor.h \
     src/widgets/logViewer/logviewer.h \
     src/widgets/logViewer/qcustomplot.h \
-#    src/widgets/maintoolbar.h \
     src/widgets/mapWidget/mapmodel.h \
     src/widgets/mapWidget/mapview.h \
     src/widgets/mapWidget/mapwidget.h

@@ -34,15 +34,11 @@ public slots:
     void setProto(DMA_proto *ECUproto);
     void setLogRate(uint logRate);
 
-    void ecuConnected();
-
-    void updateRAM(abstractMemoryScaled memory);
-
     void lockConnect(bool lockFlag);
     void lockReset(bool lockFlag);
 
 private:
-    ecuDefinition ECUdef;
+    ecuDefinition *ECUdef;
 
     QAction *a_start_action;
     QAction *a_ramReset;
@@ -53,19 +49,20 @@ private:
     char* p_in_buff;
     char* p_out_buff;
 
-    mapDefinition *getMap(Map *declMap);
 
 private slots:
     void startAction();
+    void _ecuConnected();
 
 signals:
-    void ecu_connected();
-    void disConnectECUaction();
-    void create_table(mapDefinition*);
+    void ecuConnected();
+    void ecuDisconnect();
+    void createMap(mapDefinition*);
+
+    void updateRAM(abstractMemoryScaled memory);
 
     void Log(QString);
     void logReady(QVector<float>);
-
 
 };
 
