@@ -98,5 +98,5 @@ void ecuManager::lockReset(bool lockFlag)
 }
 QVector<mutParam> *ecuManager::getRamMut()
 {
-    return &ECUdef.RAM_MUT;
+    return &ECUdef->RAM_MUT;
 }

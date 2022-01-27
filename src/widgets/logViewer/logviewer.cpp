@@ -10,7 +10,7 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
     //----------------------------
     connect(ecu_manager, &ecuManager::logReady,            this, &LogViewer::logReady);
     connect(ecu_manager, &ecuManager::ecuConnected,        this, &LogViewer::ecuConnected);
-    connect(ecu_manager, &ecuManager::disConnectECUaction, this, &LogViewer::ecuDisconnect);
+    connect(ecu_manager, &ecuManager::ecuDisconnect,       this, &LogViewer::ecuDisconnect);
     ecuDef_ramMut = ecu_manager->getRamMut();
 
     /*
