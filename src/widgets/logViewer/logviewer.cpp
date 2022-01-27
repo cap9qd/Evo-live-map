@@ -29,7 +29,12 @@ LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
     */
 
     //For menu
-    menuButton = new QPushButton("LogView");
+    menuButton = new QPushButton();
+
+    menuButton->setIcon(QIcon( ":ico/logview.png" ));
+    QSize iSize(150, 150);
+    menuButton->setIconSize(iSize);
+
     connect(menuButton, &QPushButton::clicked, this, &LogViewer::show);
     //-----
 
