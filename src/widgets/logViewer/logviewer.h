@@ -5,7 +5,7 @@
 #include <QTimer>
 #include "qcustomplot.h"
 #include <QElapsedTimer>
-#include <QDialog>
+//#include <QDialog>
 
 //#include "../../controller.h"
 #include "../ecuManager.h"
@@ -17,7 +17,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class LogViewer; }
 QT_END_NAMESPACE
 
-class LogViewer : public QDialog
+class LogViewer : public QWidget
 {
     Q_OBJECT
 

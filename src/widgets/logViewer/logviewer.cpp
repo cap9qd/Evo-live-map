@@ -2,7 +2,7 @@
 #include "ui_logviewer.h"
 
 LogViewer::LogViewer(QWidget *parent, ecuManager *ecu_manager)
-    : QDialog(parent)
+    : QWidget(nullptr, Qt::Window | Qt::WindowCloseButtonHint )
     , ui(new Ui::LogViewer)
 {
     //============================
