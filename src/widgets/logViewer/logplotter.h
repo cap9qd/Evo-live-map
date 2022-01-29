@@ -1,13 +1,10 @@
 #ifndef LOGPLOTTER_H
 #define LOGPLOTTER_H
 
-#include <QMainWindow>
 #include <QTimer>
 #include "qcustomplot.h"
 #include <QElapsedTimer>
-//#include <QDialog>
 
-//#include "../../controller.h"
 #include "../ecuManager.h"
 #include "../../types.h"
 
@@ -17,6 +14,49 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class LogPlotter; }
 QT_END_NAMESPACE
 
+typedef struct
+{
+    QString     name;
+    QCheckBox  *enaCheck;
+    QLCDNumber *lcdDisplay;
+    QCPGraph   *graph;
+    mutParam   *mutItem;
+    int         mutNumber;
+    float       graphMin;
+    float       graphMax;
+    float       scalingMin;
+    float       scalingMax;
+    QColor      plotColor;
+    QColor      brushColor;
+    QBrush      plotBrush;
+    int         brushAlpha = 0;
+
+} plotItem;
+
+class plotTrigger : public QObject //: public QWidget
+{
+    Q_OBJECT
+
+public:
+    typedef enum compOp_
+    {
+        eq = 0,
+        gt = 1,
+        ge = 2,
+        lt = 3,
+        le = 4
+    } compOp;
+    Q_ENUM(compOp)
+
+    typedef struct
+    {
+        QString      name;
+        int          mutNumber;
+        float        num1;
+        compOp       op;
+    } triggerConfig;
+};
+
 class LogPlotter : public QWidget
 {
     Q_OBJECT
@@ -25,7 +65,6 @@ public:
     LogPlotter(QWidget *parent = nullptr, ecuManager *ecu_manager = nullptr);
     ~LogPlotter();
 
-
 private slots:
     void realtimeDataSlot();
     void on_btn_pause_clicked();
@@ -33,7 +72,6 @@ private slots:
     void on_span_sb_valueChanged(double arg1);
     void on_span_sb_editingFinished();
     void on_rate_sb_editingFinished();
-
 
     void on_pb_frcEcuId_clicked();
 
@@ -81,7 +119,5 @@ private:
     double firstKey;
 
 };
-
-
 
 #endif // LOGPLOTTER_H
